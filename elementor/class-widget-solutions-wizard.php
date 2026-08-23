@@ -580,7 +580,9 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				}
 				$gallery = array_slice( array_values( array_filter( $gallery ) ), 0, 5 );
 				if ( empty( $gallery ) ) {
-					$gallery = array( SSW_PLUGIN_URL . 'assets/img/placeholder-template.svg' );
+					for ( $i = 1; $i <= 5; $i++ ) {
+						$gallery[] = SSW_PLUGIN_URL . 'assets/img/placeholder-template-' . $i . '.svg';
+					}
 				}
 				$templates[] = array(
 					'title'   => $tmpl['tmpl_title'],

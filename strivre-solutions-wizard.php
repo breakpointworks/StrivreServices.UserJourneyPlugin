@@ -77,8 +77,13 @@ final class Strivre_Solutions_Wizard {
 	 * pages that actually contain the widget end up loading these.
 	 */
 	public function register_assets() {
-		wp_register_style( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/css/wizard.css', array(), SSW_VERSION );
-		wp_register_script( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/js/wizard.js', array( 'elementor-frontend' ), SSW_VERSION, true );
+		// Cache-busted off each file's own mtime rather than SSW_VERSION, so
+		// an edit to wizard.css/js always invalidates cached copies without
+		// relying on remembering to bump a version constant by hand.
+		$css_path = SSW_PLUGIN_DIR . 'assets/css/wizard.css';
+		$js_path  = SSW_PLUGIN_DIR . 'assets/js/wizard.js';
+		wp_register_style( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/css/wizard.css', array(), file_exists( $css_path ) ? filemtime( $css_path ) : SSW_VERSION );
+		wp_register_script( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/js/wizard.js', array( 'elementor-frontend' ), file_exists( $js_path ) ? filemtime( $js_path ) : SSW_VERSION, true );
 	}
 
 	public function register_widget( $widgets_manager ) {

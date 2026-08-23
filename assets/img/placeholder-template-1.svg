@@ -11,5 +11,5 @@
 	<rect x="34" y="150" width="110" height="20" rx="10" fill="#801414"/>
 	<rect x="16" y="172" width="176" height="72" rx="8" fill="#FFFFFF" stroke="#E4E7EC"/>
 	<rect x="208" y="172" width="176" height="72" rx="8" fill="#FFFFFF" stroke="#E4E7EC"/>
-	<text x="200" y="256" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Template preview placeholder</text>
+	<text x="200" y="256" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Homepage</text>
 </svg>
