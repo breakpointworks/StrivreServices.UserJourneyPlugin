@@ -554,7 +554,8 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'label'      => __( 'Button corner radius', 'strivre-solutions-wizard' ),
 				'type'       => Controls_Manager::SLIDER,
 				'range'      => array( 'px' => array( 'min' => 0, 'max' => 999 ) ),
-				'default'    => array( 'size' => 999 ),
+				'default'    => array( 'size' => 12 ),
+				'description' => __( 'Defaults to 12px to match the site\'s own buttons (not a full pill).', 'strivre-solutions-wizard' ),
 				'selectors'  => array(
 					'{{WRAPPER}} .ssw-wizard' => '--ssw-btn-radius: {{SIZE}}px;',
 				),

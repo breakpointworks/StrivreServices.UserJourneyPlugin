@@ -36,9 +36,14 @@
 		this.storageKey = 'ssw_wizard_' + ( root.getAttribute( 'data-widget-id' ) || 'default' );
 		this.startedAt = Date.now();
 
+		// Only a title reference is persisted for tier/template (not the full
+		// object) so a restored session always resolves against the *current*
+		// config shape via selectedTier()/selectedTemplate() below, instead of
+		// replaying a frozen snapshot that goes stale the moment the widget's
+		// settings (e.g. a new badge color or image field) change.
 		this.state = {
-			template: null,
-			tier: null,
+			templateTitle: '',
+			tierTitle: '',
 			domain: '',
 			selectedSlugs: [],
 			step: 0,
@@ -91,8 +96,21 @@
 		}
 	};
 
+	SSWWizard.prototype.selectedTier = function () {
+		var title = this.state.tierTitle;
+		if ( ! title ) return null;
+		return ( this.config.tiers || [] ).filter( function ( t ) { return t.title === title; } )[ 0 ] || null;
+	};
+
+	SSWWizard.prototype.selectedTemplate = function () {
+		var title = this.state.templateTitle;
+		if ( ! title ) return null;
+		return ( this.config.templates || [] ).filter( function ( t ) { return t.title === title; } )[ 0 ] || null;
+	};
+
 	SSWWizard.prototype.pointsIncluded = function () {
-		return this.state.tier ? this.state.tier.points : 0;
+		var tier = this.selectedTier();
+		return tier ? tier.points : 0;
 	};
 
 	SSWWizard.prototype.pointsUsed = function () {
@@ -118,8 +136,8 @@
 
 	SSWWizard.prototype.canAdvance = function () {
 		var step = this.currentStepName();
-		if ( 'template' === step ) return !! this.state.template;
-		if ( 'tier' === step ) return !! this.state.tier;
+		if ( 'template' === step ) return !! this.state.templateTitle;
+		if ( 'tier' === step ) return !! this.state.tierTitle;
 		if ( 'domain' === step ) return !! this.state.domainSkipped || !! this.state.domain;
 		return true;
 	};
@@ -205,7 +223,7 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
 		this.config.templates.forEach( function ( tmpl ) {
-			var selected = this.state.template && this.state.template.title === tmpl.title;
+			var selected = this.state.templateTitle === tmpl.title;
 			var card = el( 'div', { class: 'ssw-card' + ( selected ? ' selected' : '' ) } );
 			if ( tmpl.image ) {
 				var img = el( 'img', { src: tmpl.image, alt: tmpl.title } );
@@ -217,7 +235,7 @@
 			}
 			card.appendChild( el( 'h4', {}, [ tmpl.title ] ) );
 			card.addEventListener( 'click', function () {
-				this.state.template = tmpl;
+				this.state.templateTitle = tmpl.title;
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -237,7 +255,7 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
 		this.config.tiers.forEach( function ( tier ) {
-			var selected = this.state.tier && this.state.tier.title === tier.title;
+			var selected = this.state.tierTitle === tier.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
 			var header = el( 'div', { class: 'ssw-tier-header' } );
 			header.appendChild( tierBadge( tier, 56 ) );
@@ -247,7 +265,7 @@
 			if ( tier.tagline ) card.appendChild( el( 'p', { style: 'font-weight:600;' }, [ tier.tagline ] ) );
 			if ( tier.description ) card.appendChild( el( 'p', {}, [ tier.description ] ) );
 			card.addEventListener( 'click', function () {
-				this.state.tier = tier;
+				this.state.tierTitle = tier.title;
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -349,7 +367,7 @@
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
 		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Pick your solutions' ] ) );
 
-		if ( this.state.tier ) {
+		if ( this.state.tierTitle ) {
 			wrap.appendChild( this.renderPointsBar() );
 		}
 
@@ -388,8 +406,9 @@
 		wrap.appendChild( bar );
 		wrap.appendChild( el( 'div', { class: 'ssw-points-label' }, [ used + ' / ' + included + ' points used' ] ) );
 		if ( over ) {
+			var tier = this.selectedTier();
 			wrap.appendChild( el( 'div', { class: 'ssw-shortfall-banner' }, [
-				"You're " + ( used - included ) + ' points over your ' + this.state.tier.title + ' allowance — that\'s fine, we\'ll include it in your proposal.',
+				"You're " + ( used - included ) + ' points over your ' + ( tier ? tier.title : 'package' ) + ' allowance — that\'s fine, we\'ll include it in your proposal.',
 			] ) );
 		}
 		return wrap;
@@ -563,9 +582,9 @@
 				city: val( 'city' ),
 				state: val( 'state' ),
 				zip: val( 'zip' ),
-				tier_title: this.state.tier ? this.state.tier.title : '',
+				tier_title: this.state.tierTitle || '',
 				tier_points: this.pointsIncluded(),
-				template_title: this.state.template ? this.state.template.title : '',
+				template_title: this.state.templateTitle || '',
 				domain: this.state.domain || '',
 				solutions: this.selectedSolutions().map( function ( s ) { return { title: s.title, points: s.points }; } ),
 				page_url: this.config.pageUrl || window.location.href,
@@ -612,8 +631,8 @@
 			return el( 'div', { class: 'ssw-order-row' }, [ main, el( 'div', { class: 'ssw-order-row-points' }, [ pointsText ] ) ] );
 		}
 
-		if ( this.state.template ) {
-			var tmpl = this.state.template;
+		var tmpl = this.selectedTemplate();
+		if ( tmpl ) {
 			var mainNodes = [];
 			if ( tmpl.image ) {
 				var thumb = el( 'img', { class: 'ssw-order-thumb', src: tmpl.image, alt: tmpl.title } );
@@ -627,8 +646,9 @@
 			rowCount++;
 		}
 
-		if ( this.state.tier ) {
-			list.appendChild( row( [ tierBadge( this.state.tier, 20 ), el( 'span', {}, [ 'Package: ' + this.state.tier.title ] ) ], String( this.pointsIncluded() ) ) );
+		var tier = this.selectedTier();
+		if ( tier ) {
+			list.appendChild( row( [ tierBadge( tier, 20 ), el( 'span', {}, [ 'Package: ' + tier.title ] ) ], String( this.pointsIncluded() ) ) );
 			rowCount++;
 		}
 
@@ -653,15 +673,15 @@
 		var used = this.pointsUsed();
 		var included = this.pointsIncluded();
 
-		if ( this.state.tier ) {
+		if ( tier ) {
 			var breakdown = el( 'div', { class: 'ssw-order-breakdown' } );
 			breakdown.appendChild( row( [ el( 'span', {}, [ 'Points used' ] ) ], String( used ) ) );
-			breakdown.appendChild( row( [ el( 'span', {}, [ this.state.tier.title + ' allowance' ] ) ], '−' + included ) );
+			breakdown.appendChild( row( [ el( 'span', {}, [ tier.title + ' allowance' ] ) ], '−' + included ) );
 			box.appendChild( breakdown );
 		}
 
 		var diff = used - included;
-		var totalLabel = ! this.state.tier
+		var totalLabel = ! tier
 			? used + ' pts'
 			: diff > 0
 				? diff + ' pts over budget'
