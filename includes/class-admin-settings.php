@@ -32,8 +32,10 @@ class SSW_Admin_Settings {
 			'notification_emails'   => get_option( 'admin_email' ),
 			'from_name'              => get_bloginfo( 'name' ),
 			'from_email'             => get_option( 'admin_email' ),
+			'domain_provider'        => 'layered',
 			'domainr_api_key'        => '',
 			'domainr_api_host'       => 'domains-api.p.rapidapi.com',
+			'hostinger_api_token'    => '',
 			'spam_guard_enabled'     => 1,
 			'admin_email_subject'    => 'New Solutions Wizard submission — {company}',
 			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nAddress:\n{address}\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
@@ -67,8 +69,10 @@ class SSW_Admin_Settings {
 		$clean['notification_emails']   = sanitize_text_field( $input['notification_emails'] ?? '' );
 		$clean['from_name']             = sanitize_text_field( $input['from_name'] ?? '' );
 		$clean['from_email']            = sanitize_email( $input['from_email'] ?? '' );
+		$clean['domain_provider']       = 'hostinger' === ( $input['domain_provider'] ?? '' ) ? 'hostinger' : 'layered';
 		$clean['domainr_api_key']       = sanitize_text_field( $input['domainr_api_key'] ?? '' );
 		$clean['domainr_api_host']      = sanitize_text_field( $input['domainr_api_host'] ?? '' );
+		$clean['hostinger_api_token']   = sanitize_text_field( $input['hostinger_api_token'] ?? '' );
 		$clean['spam_guard_enabled']    = empty( $input['spam_guard_enabled'] ) ? 0 : 1;
 		$clean['admin_email_subject']   = sanitize_text_field( $input['admin_email_subject'] ?? '' );
 		$clean['admin_email_body']      = sanitize_textarea_field( $input['admin_email_body'] ?? '' );
@@ -105,8 +109,22 @@ class SSW_Admin_Settings {
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Domain search (Domains API / RapidAPI)', 'strivre-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Domain search', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
+					<tr>
+						<th><label for="ssw_domain_provider"><?php esc_html_e( 'Provider', 'strivre-solutions-wizard' ); ?></label></th>
+						<td>
+							<select id="ssw_domain_provider" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[domain_provider]">
+								<option value="layered" <?php selected( $s['domain_provider'], 'layered' ); ?>><?php esc_html_e( 'Domains API by Layered (RapidAPI)', 'strivre-solutions-wizard' ); ?></option>
+								<option value="hostinger" <?php selected( $s['domain_provider'], 'hostinger' ); ?>><?php esc_html_e( 'Hostinger API', 'strivre-solutions-wizard' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'Only the selected provider is used for live lookups — the other one\'s credentials below are just kept on hand so you can switch back without re-entering them.', 'strivre-solutions-wizard' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<h3><?php esc_html_e( 'Domains API by Layered (RapidAPI)', 'strivre-solutions-wizard' ); ?></h3>
+				<table class="form-table ssw-provider-fields" data-provider="layered" role="presentation">
 					<tr>
 						<th><label for="ssw_domainr_api_key"><?php esc_html_e( 'RapidAPI key', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_domainr_api_key" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[domainr_api_key]" value="<?php echo esc_attr( $s['domainr_api_key'] ); ?>" autocomplete="off" />
@@ -117,6 +135,28 @@ class SSW_Admin_Settings {
 						<td><input type="text" id="ssw_domainr_api_host" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[domainr_api_host]" value="<?php echo esc_attr( $s['domainr_api_host'] ); ?>" /></td>
 					</tr>
 				</table>
+
+				<h3><?php esc_html_e( 'Hostinger API', 'strivre-solutions-wizard' ); ?></h3>
+				<table class="form-table ssw-provider-fields" data-provider="hostinger" role="presentation">
+					<tr>
+						<th><label for="ssw_hostinger_api_token"><?php esc_html_e( 'API token', 'strivre-solutions-wizard' ); ?></label></th>
+						<td><input type="text" id="ssw_hostinger_api_token" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[hostinger_api_token]" value="<?php echo esc_attr( $s['hostinger_api_token'] ); ?>" autocomplete="off" />
+						<p class="description"><?php esc_html_e( 'Bearer token from developers.hostinger.com. Without a token, the domain search step shows a graceful "temporarily unavailable" message rather than failing.', 'strivre-solutions-wizard' ); ?></p></td>
+					</tr>
+				</table>
+				<script>
+				( function () {
+					var select = document.getElementById( 'ssw_domain_provider' );
+					var groups = document.querySelectorAll( '.ssw-provider-fields' );
+					function sync() {
+						groups.forEach( function ( g ) {
+							g.style.display = g.getAttribute( 'data-provider' ) === select.value ? '' : 'none';
+						} );
+					}
+					select.addEventListener( 'change', sync );
+					sync();
+				} )();
+				</script>
 
 				<h2 class="title"><?php esc_html_e( 'Spam guard', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
