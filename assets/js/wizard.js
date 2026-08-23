@@ -18,6 +18,9 @@
 	}
 
 	var STAR_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2l2.9 6.9L22 9.6l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.6L2 9.6l7.1-.7L12 2z"/></svg>';
+	var DOMAIN_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.7 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.7-3.8-9s1.3-6.5 3.8-9z"/></svg>';
+	var CHECK_CIRCLE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>';
+	var X_CIRCLE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
 
 	function tierBadge( tier, size ) {
 		var svg = size <= 20
@@ -218,8 +221,8 @@
 
 	SSWWizard.prototype.renderTemplatePanel = function () {
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
-		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Pick a website template' ] ) );
-		wrap.appendChild( el( 'p', {}, [ 'Click a mockup to preview it, then select the one you want.' ] ) );
+		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.templateHeading || 'Pick a website template' ] ) );
+		wrap.appendChild( el( 'p', {}, [ this.config.templateSubheading || 'Click a mockup to preview it, then select the one you want.' ] ) );
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
 		this.config.templates.forEach( function ( tmpl ) {
@@ -251,7 +254,7 @@
 
 	SSWWizard.prototype.renderTierPanel = function () {
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
-		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Choose your package' ] ) );
+		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.tierHeading || 'Choose your package' ] ) );
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
 		this.config.tiers.forEach( function ( tier ) {
@@ -279,16 +282,30 @@
 
 	/* ------------------------------------------------------------ domain step */
 
+	function domainRow( domainText, statusText, selected ) {
+		var wrap = el( 'div', { class: 'ssw-suggestion' + ( selected ? ' selected' : '' ) } );
+		wrap.appendChild( el( 'div', { class: 'ssw-suggestion-main' }, [
+			el( 'span', { class: 'ssw-suggestion-icon', html: DOMAIN_SVG } ),
+			el( 'span', {}, [ domainText ] ),
+		] ) );
+		wrap.appendChild( el( 'span', { class: 'status available' }, [
+			el( 'span', { class: 'status-icon', html: CHECK_CIRCLE_SVG } ),
+			el( 'span', {}, [ statusText ] ),
+		] ) );
+		return wrap;
+	}
+
 	SSWWizard.prototype.renderDomainPanel = function () {
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
 		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.domainHeading || "Let's find your domain" ] ) );
 
-		var row = el( 'div', { class: 'ssw-domain-row' } );
-		var input = el( 'input', { class: 'ssw-input', type: 'text', placeholder: 'yourbusiness.com', value: this.state.domainQuery || '' } );
+		var searchBar = el( 'div', { class: 'ssw-domain-search' } );
+		searchBar.appendChild( el( 'span', { class: 'ssw-domain-search-icon', html: DOMAIN_SVG } ) );
+		var input = el( 'input', { type: 'text', placeholder: 'yourbusiness.com', value: this.state.domainQuery || '' } );
 		var checkBtn = el( 'button', { class: 'ssw-btn', type: 'button' }, [ 'Check availability' ] );
-		row.appendChild( input );
-		row.appendChild( checkBtn );
-		wrap.appendChild( row );
+		searchBar.appendChild( input );
+		searchBar.appendChild( checkBtn );
+		wrap.appendChild( searchBar );
 
 		var results = el( 'div', { class: 'ssw-domain-results' } );
 		wrap.appendChild( results );
@@ -309,20 +326,20 @@
 					results.innerHTML = '';
 					if ( ! res.ok || data.error ) {
 						if ( ! data.error ) data.error = 'Domain search is temporarily unavailable.';
-						results.appendChild( el( 'div', { class: 'ssw-domain-result error' }, [ data.error ] ) );
+						results.appendChild( el( 'div', { class: 'ssw-domain-result error' }, [
+							el( 'span', { html: X_CIRCLE_SVG } ),
+							el( 'span', {}, [ data.error ] ),
+						] ) );
 						return;
 					}
 					results.appendChild(
 						el( 'div', { class: 'ssw-domain-result ' + ( data.available ? 'available' : 'taken' ) }, [
-							q + ( data.available ? ' is available!' : ' is already taken.' ),
+							el( 'span', { html: data.available ? CHECK_CIRCLE_SVG : X_CIRCLE_SVG } ),
+							el( 'span', {}, [ q + ( data.available ? ' is available!' : ' is already taken.' ) ] ),
 						] )
 					);
 					if ( data.available ) {
-						var pick = el( 'div', { class: 'ssw-suggestion selected' }, [
-							el( 'span', {}, [ q ] ),
-							el( 'span', { class: 'status available' }, [ 'Selected' ] ),
-						] );
-						results.appendChild( pick );
+						results.appendChild( domainRow( q, 'Selected', true ) );
 						this.state.domain = q;
 						this.state.domainSkipped = false;
 						this.persist();
@@ -330,10 +347,7 @@
 					}
 					( data.suggestions || [] ).forEach( function ( sug ) {
 						if ( ! sug.available ) return;
-						var row2 = el( 'div', { class: 'ssw-suggestion' + ( this.state.domain === sug.domain ? ' selected' : '' ) }, [
-							el( 'span', {}, [ sug.domain ] ),
-							el( 'span', { class: 'status available' }, [ 'Available' ] ),
-						] );
+						var row2 = domainRow( sug.domain, 'Available', this.state.domain === sug.domain );
 						row2.addEventListener( 'click', function () {
 							this.state.domain = sug.domain;
 							this.state.domainSkipped = false;
@@ -345,7 +359,10 @@
 				}.bind( this ) )
 				.catch( function () {
 					results.innerHTML = '';
-					results.appendChild( el( 'div', { class: 'ssw-domain-result error' }, [ 'Domain search is temporarily unavailable.' ] ) );
+					results.appendChild( el( 'div', { class: 'ssw-domain-result error' }, [
+						el( 'span', { html: X_CIRCLE_SVG } ),
+						el( 'span', {}, [ 'Domain search is temporarily unavailable.' ] ),
+					] ) );
 				} );
 		}.bind( this );
 
@@ -365,7 +382,7 @@
 
 	SSWWizard.prototype.renderSolutionsPanel = function () {
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
-		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Pick your solutions' ] ) );
+		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.solutionsHeading || 'Pick your solutions' ] ) );
 
 		if ( this.state.tierTitle ) {
 			wrap.appendChild( this.renderPointsBar() );
@@ -422,7 +439,7 @@
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
 		var layout = el( 'div', { class: 'ssw-checkout-layout' } );
 		var formCol = el( 'div', { class: 'ssw-checkout-form' } );
-		formCol.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Your Details' ] ) );
+		formCol.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.checkoutHeading || 'Your Details' ] ) );
 
 		var form = el( 'form', { novalidate: 'novalidate' } );
 		var fields = this.config.fields || {};
@@ -655,7 +672,10 @@
 		}
 
 		if ( this.state.domain ) {
-			list.appendChild( row( [ el( 'span', {}, [ 'Domain: ' + this.state.domain ] ) ], '—' ) );
+			list.appendChild( row( [
+				el( 'span', { class: 'ssw-order-icon-svg', html: DOMAIN_SVG } ),
+				el( 'span', {}, [ 'Domain: ' + this.state.domain ] ),
+			], '—' ) );
 			rowCount++;
 		}
 
@@ -701,7 +721,8 @@
 		this.root.innerHTML = '';
 		this.root.appendChild(
 			el( 'div', { class: 'ssw-thankyou' }, [
-				el( 'h3', {}, [ "You're all set!" ] ),
+				el( 'div', { class: 'ssw-thankyou-icon', html: CHECK_CIRCLE_SVG } ),
+				el( 'h3', {}, [ this.config.thankyouHeading || "You're all set!" ] ),
 				el( 'p', {}, [ this.config.successMessage || 'Thanks — our team will be in touch shortly.' ] ),
 			] )
 		);

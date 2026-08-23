@@ -127,6 +127,15 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'tier_step_heading',
+			array(
+				'label'   => __( 'Step heading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Choose your package', 'strivre-solutions-wizard' ),
+			)
+		);
+
 		$repeater = new Repeater();
 
 		$repeater->add_control(
@@ -218,6 +227,23 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'template_step_heading',
+			array(
+				'label'   => __( 'Step heading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Pick a website template', 'strivre-solutions-wizard' ),
+			)
+		);
+		$this->add_control(
+			'template_step_subheading',
+			array(
+				'label'   => __( 'Step subheading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Click a mockup to preview it, then select the one you want.', 'strivre-solutions-wizard' ),
+			)
+		);
+
 		$repeater = new Repeater();
 
 		$repeater->add_control(
@@ -291,6 +317,15 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			array(
 				'label' => __( 'Solutions Catalog', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
+			)
+		);
+
+		$this->add_control(
+			'solutions_step_heading',
+			array(
+				'label'   => __( 'Step heading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Pick your solutions', 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -396,6 +431,15 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'checkout_step_heading',
+			array(
+				'label'   => __( 'Step heading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Your Details', 'strivre-solutions-wizard' ),
+			)
+		);
+
 		foreach ( array(
 			'name'    => __( 'Name required', 'strivre-solutions-wizard' ),
 			'email'   => __( 'Email required', 'strivre-solutions-wizard' ),
@@ -422,9 +466,18 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		);
 
 		$this->add_control(
+			'thankyou_heading',
+			array(
+				'label'   => __( 'Thank-you heading', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( "You're all set!", 'strivre-solutions-wizard' ),
+			)
+		);
+
+		$this->add_control(
 			'success_message',
 			array(
-				'label'   => __( 'Success message', 'strivre-solutions-wizard' ),
+				'label'   => __( 'Thank-you message', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXTAREA,
 				'default' => __( "Thanks! We've got your request — our team will send you a business proposal within 24 hours.", 'strivre-solutions-wizard' ),
 			)
@@ -628,7 +681,13 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			'enableTierStep'  => 'yes' === $settings['enable_tier_step'],
 			'enableDomainStep' => 'yes' === $settings['enable_domain_step'],
 			'preselectParam'  => $settings['preselect_param'] ?: 'solution',
+			'tierHeading'     => $settings['tier_step_heading'] ?? '',
+			'templateHeading' => $settings['template_step_heading'] ?? '',
+			'templateSubheading' => $settings['template_step_subheading'] ?? '',
 			'domainHeading'   => $settings['domain_heading'] ?? '',
+			'solutionsHeading' => $settings['solutions_step_heading'] ?? '',
+			'checkoutHeading' => $settings['checkout_step_heading'] ?? '',
+			'thankyouHeading' => $settings['thankyou_heading'] ?? '',
 			'templates'       => $templates,
 			'tiers'           => $tiers,
 			'solutions'       => $solutions,
