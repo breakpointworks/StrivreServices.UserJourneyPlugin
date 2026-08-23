@@ -1,0 +1,139 @@
+.ssw-wizard {
+	--ssw-primary: #002144;
+	--ssw-secondary: #801414;
+	--ssw-text: #1E2933;
+	--ssw-bg: #F4F6F8;
+	--ssw-surface: #FFFFFF;
+	--ssw-border: #64748B;
+	--ssw-selected-tint: #F6EAEA;
+	--ssw-points-ok: #17845A;
+	--ssw-points-shortfall: #B36B00;
+	--ssw-card-radius: 14px;
+	--ssw-btn-radius: 999px;
+
+	color: var(--ssw-text);
+	background: var(--ssw-bg);
+	padding: 32px;
+	border-radius: var(--ssw-card-radius);
+	box-sizing: border-box;
+}
+.ssw-wizard *, .ssw-wizard *::before, .ssw-wizard *::after { box-sizing: inherit; }
+
+.ssw-heading { color: var(--ssw-primary); margin: 0 0 8px; }
+
+/* Step indicator */
+.ssw-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+.ssw-step-dot {
+	display: flex; align-items: center; gap: 8px;
+	font-size: 13px; color: var(--ssw-border);
+}
+.ssw-step-dot .num {
+	width: 28px; height: 28px; border-radius: 50%;
+	border: 2px solid var(--ssw-border);
+	display: flex; align-items: center; justify-content: center;
+	font-weight: 600; background: var(--ssw-surface);
+}
+.ssw-step-dot.done .num { background: var(--ssw-primary); border-color: var(--ssw-primary); color: #fff; }
+.ssw-step-dot.current .num { border-color: var(--ssw-secondary); color: var(--ssw-secondary); }
+.ssw-step-dot.current { color: var(--ssw-text); font-weight: 600; }
+.ssw-step-line { flex: 1 0 20px; height: 2px; background: var(--ssw-border); opacity: .4; min-width: 16px; }
+
+/* Panels */
+.ssw-panel { display: none; }
+.ssw-panel.active { display: block; }
+
+/* Cards / grid */
+.ssw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+.ssw-card {
+	background: var(--ssw-surface);
+	border: 2px solid transparent;
+	border-radius: var(--ssw-card-radius);
+	box-shadow: 0 4px 16px rgba(16,24,40,0.08);
+	padding: 20px;
+	cursor: pointer;
+	transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background-color .15s ease;
+}
+.ssw-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,24,40,0.12); }
+.ssw-card.selected { border-color: var(--ssw-secondary); background: var(--ssw-selected-tint); }
+.ssw-card img { max-width: 100%; border-radius: calc(var(--ssw-card-radius) - 6px); display: block; margin-bottom: 12px; cursor: zoom-in; }
+.ssw-card h4 { margin: 0 0 4px; color: var(--ssw-primary); }
+.ssw-card p { margin: 0 0 8px; font-size: 14px; opacity: .85; }
+.ssw-points-badge { display: inline-block; font-size: 13px; font-weight: 600; color: var(--ssw-secondary); }
+.ssw-card-icon { width: 40px; height: 40px; object-fit: contain; margin-bottom: 10px; }
+
+/* Buttons */
+.ssw-btn {
+	display: inline-flex; align-items: center; justify-content: center;
+	border-radius: var(--ssw-btn-radius);
+	padding: 12px 28px;
+	border: 2px solid var(--ssw-primary);
+	background: var(--ssw-primary);
+	color: #fff;
+	cursor: pointer;
+	font-weight: 600;
+}
+.ssw-btn[disabled] { opacity: .5; cursor: not-allowed; }
+.ssw-btn.ghost { background: transparent; color: var(--ssw-primary); }
+.ssw-nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+
+/* Domain search */
+.ssw-domain-row { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
+.ssw-input {
+	flex: 1 1 260px; padding: 12px 16px; border-radius: 10px;
+	border: 1px solid var(--ssw-border); font-size: 15px;
+}
+.ssw-domain-result { padding: 14px 18px; border-radius: 10px; margin-bottom: 8px; font-weight: 600; }
+.ssw-domain-result.available { background: #E6F4EC; color: var(--ssw-points-ok); }
+.ssw-domain-result.taken { background: #FCEBEC; color: var(--ssw-secondary); }
+.ssw-domain-result.error { background: #FFF6E5; color: var(--ssw-points-shortfall); }
+.ssw-suggestion { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid var(--ssw-border); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+.ssw-suggestion.selected { border-color: var(--ssw-secondary); background: var(--ssw-selected-tint); }
+.ssw-suggestion .status { font-size: 13px; font-weight: 600; }
+.ssw-suggestion .status.available { color: var(--ssw-points-ok); }
+.ssw-suggestion .status.taken { color: var(--ssw-border); }
+
+/* Points bar */
+.ssw-points-bar-wrap { margin: 8px 0 20px; }
+.ssw-points-bar { height: 10px; border-radius: 999px; background: #E4E7EC; overflow: hidden; }
+.ssw-points-bar-fill { height: 100%; background: var(--ssw-points-ok); transition: width .2s ease, background-color .2s ease; }
+.ssw-points-bar-fill.over { background: var(--ssw-points-shortfall); }
+.ssw-points-label { font-size: 14px; font-weight: 600; margin-top: 6px; }
+.ssw-shortfall-banner {
+	background: #FFF6E5; color: var(--ssw-points-shortfall);
+	padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 12px;
+}
+
+/* Checkout form */
+.ssw-field { margin-bottom: 16px; }
+.ssw-field label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.ssw-field input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--ssw-border); font-size: 15px; }
+.ssw-field.error input { border-color: #C41E3A; }
+.ssw-field-error { color: #C41E3A; font-size: 13px; margin-top: 4px; }
+.ssw-hp { position: absolute; left: -9999px; top: -9999px; }
+
+.ssw-summary { background: var(--ssw-surface); border-radius: var(--ssw-card-radius); padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(16,24,40,0.06); }
+.ssw-summary h4 { margin: 0 0 10px; color: var(--ssw-primary); }
+.ssw-summary ul { margin: 0; padding-left: 18px; }
+
+.ssw-thankyou { text-align: center; padding: 40px 20px; }
+.ssw-thankyou h3 { color: var(--ssw-primary); }
+
+.ssw-form-error { color: #C41E3A; margin-top: 12px; }
+
+/* Lightbox */
+.ssw-lightbox { position: fixed; inset: 0; background: rgba(15,27,51,.85); display: none; align-items: center; justify-content: center; z-index: 100000; padding: 24px; }
+.ssw-lightbox.open { display: flex; }
+.ssw-lightbox img { max-width: 90vw; max-height: 80vh; border-radius: 8px; }
+.ssw-lightbox-close, .ssw-lightbox-prev, .ssw-lightbox-next {
+	position: absolute; background: rgba(255,255,255,.15); color: #fff; border: none;
+	width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 20px;
+}
+.ssw-lightbox-close { top: 24px; right: 24px; }
+.ssw-lightbox-prev { left: 24px; top: 50%; transform: translateY(-50%); }
+.ssw-lightbox-next { right: 24px; top: 50%; transform: translateY(-50%); }
+
+@media (max-width: 600px) {
+	.ssw-wizard { padding: 20px; }
+	.ssw-nav { flex-direction: column-reverse; }
+	.ssw-btn { width: 100%; }
+}

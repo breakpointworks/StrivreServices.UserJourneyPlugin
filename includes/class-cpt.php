@@ -1,0 +1,427 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * The `strive_request` CPT: one post per wizard submission, plus the admin
+ * list/detail screens (columns, read-only detail meta box, archive status,
+ * CSV/JSON export). Submissions are records, not authored content, so there's
+ * no editor and no front-end visibility.
+ */
+class SSW_CPT {
+
+	const POST_TYPE      = 'strive_request';
+	const STATUS_ARCHIVED = 'strive-archived';
+
+	private static $instance = null;
+
+	public static function instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	private function __construct() {
+		add_action( 'init', array( __CLASS__, 'register_post_type' ) );
+		add_action( 'init', array( __CLASS__, 'register_post_status' ) );
+
+		add_filter( 'manage_' . self::POST_TYPE . '_posts_columns', array( $this, 'columns' ) );
+		add_action( 'manage_' . self::POST_TYPE . '_posts_custom_column', array( $this, 'render_column' ), 10, 2 );
+		add_filter( 'list_table_primary_column', array( $this, 'primary_column' ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 10, 2 );
+		add_filter( 'views_edit-' . self::POST_TYPE, array( $this, 'status_views' ) );
+
+		add_action( 'add_meta_boxes_' . self::POST_TYPE, array( $this, 'add_meta_box' ) );
+
+		add_filter( 'bulk_actions-edit-' . self::POST_TYPE, array( $this, 'bulk_actions' ) );
+		add_filter( 'handle_bulk_actions-edit-' . self::POST_TYPE, array( $this, 'handle_bulk_actions' ), 10, 3 );
+		add_action( 'admin_notices', array( $this, 'bulk_action_notices' ) );
+
+		add_action( 'admin_post_ssw_export', array( $this, 'stream_export' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'export_all_button' ) );
+	}
+
+	public static function register_post_type() {
+		register_post_type(
+			self::POST_TYPE,
+			array(
+				'labels'       => array(
+					'name'          => __( 'Strive Requests', 'strive-solutions-wizard' ),
+					'singular_name' => __( 'Strive Request', 'strive-solutions-wizard' ),
+					'all_items'     => __( 'Submissions', 'strive-solutions-wizard' ),
+					'edit_item'     => __( 'Submission Details', 'strive-solutions-wizard' ),
+					'search_items'  => __( 'Search Submissions', 'strive-solutions-wizard' ),
+				),
+				'public'       => false,
+				'show_ui'      => true,
+				'show_in_menu' => true,
+				'show_in_rest' => false,
+				'menu_icon'    => 'dashicons-clipboard',
+				'supports'     => array( 'title' ),
+				'has_archive'  => false,
+				'rewrite'      => false,
+				'capability_type' => 'post',
+			)
+		);
+	}
+
+	public static function register_post_status() {
+		register_post_status(
+			self::STATUS_ARCHIVED,
+			array(
+				'label'                     => _x( 'Archived', 'submission status', 'strive-solutions-wizard' ),
+				'public'                    => false,
+				'internal'                  => false,
+				'exclude_from_search'       => true,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				/* translators: %s: number of archived submissions */
+				'label_count'               => _n_noop( 'Archived <span class="count">(%s)</span>', 'Archived <span class="count">(%s)</span>', 'strive-solutions-wizard' ),
+			)
+		);
+	}
+
+	/* ---------------------------------------------------------------------
+	 * List table
+	 * ------------------------------------------------------------------ */
+
+	public function columns( $columns ) {
+		unset( $columns['title'], $columns['date'] );
+		return array_merge(
+			$columns,
+			array(
+				'ssw_name'    => __( 'Name', 'strive-solutions-wizard' ),
+				'ssw_email'   => __( 'Email', 'strive-solutions-wizard' ),
+				'ssw_company' => __( 'Company', 'strive-solutions-wizard' ),
+				'ssw_tier'    => __( 'Tier', 'strive-solutions-wizard' ),
+				'ssw_points'  => __( 'Points', 'strive-solutions-wizard' ),
+				'ssw_domain'  => __( 'Domain', 'strive-solutions-wizard' ),
+				'date'        => __( 'Date', 'strive-solutions-wizard' ),
+			)
+		);
+	}
+
+	public function render_column( $column, $post_id ) {
+		switch ( $column ) {
+			case 'ssw_name':
+				$name = get_post_meta( $post_id, '_customer_name', true );
+				echo '<strong><a class="row-title" href="' . esc_url( get_edit_post_link( $post_id ) ) . '">' . esc_html( $name ? $name : '(no name)' ) . '</a></strong>';
+				break;
+			case 'ssw_email':
+				echo esc_html( get_post_meta( $post_id, '_customer_email', true ) );
+				break;
+			case 'ssw_company':
+				echo esc_html( get_post_meta( $post_id, '_company_name', true ) );
+				break;
+			case 'ssw_tier':
+				echo esc_html( get_post_meta( $post_id, '_tier_chosen', true ) );
+				break;
+			case 'ssw_points':
+				$used      = (int) get_post_meta( $post_id, '_points_used', true );
+				$included  = (int) get_post_meta( $post_id, '_points_included', true );
+				$shortfall = (int) get_post_meta( $post_id, '_points_shortfall', true );
+				if ( $included > 0 || $used > 0 ) {
+					echo esc_html( $used . ' / ' . $included );
+					if ( $shortfall > 0 ) {
+						echo ' <span style="color:#B36B00;">(&minus;' . esc_html( $shortfall ) . ')</span>';
+					}
+				} else {
+					echo '&#8212;';
+				}
+				break;
+			case 'ssw_domain':
+				echo esc_html( get_post_meta( $post_id, '_domain_chosen', true ) ?: '—' );
+				break;
+		}
+	}
+
+	public function primary_column( $column, $screen_id ) {
+		if ( 'edit-' . self::POST_TYPE === $screen_id ) {
+			return 'ssw_name';
+		}
+		return $column;
+	}
+
+	public function row_actions( $actions, $post ) {
+		if ( self::POST_TYPE !== $post->post_type ) {
+			return $actions;
+		}
+		unset( $actions['inline hide-if-no-js'], $actions['view'] );
+
+		if ( self::STATUS_ARCHIVED === $post->post_status ) {
+			$actions['ssw_restore'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $this->action_url( 'ssw_restore', $post->ID ) ),
+				esc_html__( 'Restore', 'strive-solutions-wizard' )
+			);
+		} else {
+			$actions['ssw_archive'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $this->action_url( 'ssw_archive', $post->ID ) ),
+				esc_html__( 'Archive', 'strive-solutions-wizard' )
+			);
+		}
+		return $actions;
+	}
+
+	private function action_url( $action, $post_id ) {
+		return wp_nonce_url(
+			add_query_arg(
+				array(
+					'action' => $action,
+					'post'   => $post_id,
+				),
+				admin_url( 'edit.php?post_type=' . self::POST_TYPE )
+			),
+			$action . '_' . $post_id
+		);
+	}
+
+	public function status_views( $views ) {
+		$archived_count = wp_count_posts( self::POST_TYPE )->{self::STATUS_ARCHIVED} ?? 0;
+		$class          = ( isset( $_GET['post_status'] ) && self::STATUS_ARCHIVED === $_GET['post_status'] ) ? ' class="current"' : '';
+		$url            = add_query_arg(
+			array(
+				'post_type'   => self::POST_TYPE,
+				'post_status' => self::STATUS_ARCHIVED,
+			),
+			admin_url( 'edit.php' )
+		);
+		$views['ssw_archived'] = sprintf(
+			'<a href="%s"%s>%s <span class="count">(%d)</span></a>',
+			esc_url( $url ),
+			$class,
+			esc_html__( 'Archived', 'strive-solutions-wizard' ),
+			(int) $archived_count
+		);
+		if ( isset( $views['publish'] ) ) {
+			$views['publish'] = str_replace( '>' . __( 'Published' ), '>' . __( 'New', 'strive-solutions-wizard' ), $views['publish'] );
+			$views['publish'] = preg_replace( '/Published(?!\s*<span)/', __( 'New', 'strive-solutions-wizard' ), $views['publish'] );
+		}
+		return $views;
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Detail view
+	 * ------------------------------------------------------------------ */
+
+	public function add_meta_box() {
+		remove_post_type_support( self::POST_TYPE, 'editor' );
+		add_meta_box(
+			'ssw_submission_details',
+			__( 'Submission Details', 'strive-solutions-wizard' ),
+			array( $this, 'render_meta_box' ),
+			self::POST_TYPE,
+			'normal',
+			'high'
+		);
+	}
+
+	public function render_meta_box( $post ) {
+		$fields = array(
+			__( 'Name', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_name', true ),
+			__( 'Email', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_email', true ),
+			__( 'Phone', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_phone', true ),
+			__( 'Company', 'strive-solutions-wizard' )            => get_post_meta( $post->ID, '_company_name', true ),
+			__( 'Package Tier', 'strive-solutions-wizard' )       => get_post_meta( $post->ID, '_tier_chosen', true ),
+			__( 'Website Template', 'strive-solutions-wizard' )   => get_post_meta( $post->ID, '_template_chosen', true ),
+			__( 'Domain', 'strive-solutions-wizard' )             => get_post_meta( $post->ID, '_domain_chosen', true ),
+			__( 'Points Included', 'strive-solutions-wizard' )    => get_post_meta( $post->ID, '_points_included', true ),
+			__( 'Points Used', 'strive-solutions-wizard' )        => get_post_meta( $post->ID, '_points_used', true ),
+			__( 'Points Shortfall', 'strive-solutions-wizard' )   => get_post_meta( $post->ID, '_points_shortfall', true ),
+			__( 'Source Page', 'strive-solutions-wizard' )        => get_post_meta( $post->ID, '_source_page_url', true ),
+		);
+
+		echo '<table class="widefat striped"><tbody>';
+		foreach ( $fields as $label => $value ) {
+			echo '<tr><th style="width:220px;text-align:left;">' . esc_html( $label ) . '</th><td>' . esc_html( $value ?: '—' ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
+
+		$solutions = json_decode( get_post_meta( $post->ID, '_solutions', true ), true );
+		echo '<h3 style="margin-top:20px;">' . esc_html__( 'Selected Solutions', 'strive-solutions-wizard' ) . '</h3>';
+		if ( $solutions ) {
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strive-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strive-solutions-wizard' ) . '</th></tr></thead><tbody>';
+			foreach ( $solutions as $item ) {
+				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
+			}
+			echo '</tbody></table>';
+		} else {
+			echo '<p>' . esc_html__( 'None selected.', 'strive-solutions-wizard' ) . '</p>';
+		}
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Bulk actions: archive / restore / export
+	 * ------------------------------------------------------------------ */
+
+	public function bulk_actions( $actions ) {
+		unset( $actions['edit'] );
+		$actions['ssw_archive']     = __( 'Archive', 'strive-solutions-wizard' );
+		$actions['ssw_restore']     = __( 'Restore', 'strive-solutions-wizard' );
+		$actions['ssw_export_csv']  = __( 'Export to CSV', 'strive-solutions-wizard' );
+		$actions['ssw_export_json'] = __( 'Export to JSON', 'strive-solutions-wizard' );
+		return $actions;
+	}
+
+	public function handle_bulk_actions( $redirect_to, $action, $post_ids ) {
+		$post_ids = array_map( 'absint', $post_ids );
+
+		if ( 'ssw_archive' === $action ) {
+			foreach ( $post_ids as $id ) {
+				wp_update_post( array( 'ID' => $id, 'post_status' => self::STATUS_ARCHIVED ) );
+			}
+			return add_query_arg( 'ssw_archived', count( $post_ids ), $redirect_to );
+		}
+
+		if ( 'ssw_restore' === $action ) {
+			foreach ( $post_ids as $id ) {
+				wp_update_post( array( 'ID' => $id, 'post_status' => 'publish' ) );
+			}
+			return add_query_arg( 'ssw_restored', count( $post_ids ), $redirect_to );
+		}
+
+		if ( 'ssw_export_csv' === $action || 'ssw_export_json' === $action ) {
+			$format = 'ssw_export_csv' === $action ? 'csv' : 'json';
+			$key    = 'ssw_export_' . wp_generate_password( 12, false );
+			set_transient( $key, array( 'ids' => $post_ids, 'format' => $format ), 5 * MINUTE_IN_SECONDS );
+			return add_query_arg(
+				array(
+					'action' => 'ssw_export',
+					'key'    => $key,
+					'_wpnonce' => wp_create_nonce( 'ssw_export_' . $key ),
+				),
+				admin_url( 'admin-post.php' )
+			);
+		}
+
+		return $redirect_to;
+	}
+
+	public function bulk_action_notices() {
+		if ( ! empty( $_GET['ssw_archived'] ) ) {
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission archived.', '%d submissions archived.', (int) $_GET['ssw_archived'], 'strive-solutions-wizard' ), (int) $_GET['ssw_archived'] ) ) );
+		}
+		if ( ! empty( $_GET['ssw_restored'] ) ) {
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission restored.', '%d submissions restored.', (int) $_GET['ssw_restored'], 'strive-solutions-wizard' ), (int) $_GET['ssw_restored'] ) ) );
+		}
+	}
+
+	/**
+	 * Handles single-row Archive/Restore links from row_actions(), and the
+	 * redirect step for bulk CSV/JSON export (streams the file and exits).
+	 */
+	public function stream_export() {
+		$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+
+		if ( 'ssw_archive' === $action || 'ssw_restore' === $action ) {
+			$post_id = absint( $_GET['post'] ?? 0 );
+			check_admin_referer( $action . '_' . $post_id );
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
+			}
+			wp_update_post( array( 'ID' => $post_id, 'post_status' => 'ssw_archive' === $action ? self::STATUS_ARCHIVED : 'publish' ) );
+			wp_safe_redirect( admin_url( 'edit.php?post_type=' . self::POST_TYPE ) );
+			exit;
+		}
+
+		if ( isset( $_GET['export_all'] ) ) {
+			check_admin_referer( 'ssw_export_all' );
+			if ( ! current_user_can( 'edit_posts' ) ) {
+				wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
+			}
+			$format = 'json' === $_GET['export_all'] ? 'json' : 'csv';
+			$query_args = array(
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => isset( $_GET['post_status'] ) ? sanitize_key( wp_unslash( $_GET['post_status'] ) ) : array( 'publish', self::STATUS_ARCHIVED ),
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				's'              => isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '',
+			);
+			$ids = get_posts( $query_args );
+			$this->do_export( $ids, $format );
+			return;
+		}
+
+		$key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		check_admin_referer( 'ssw_export_' . $key );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
+		}
+
+		$data = get_transient( $key );
+		if ( ! $data ) {
+			wp_die( esc_html__( 'This export link has expired. Please try again.', 'strive-solutions-wizard' ) );
+		}
+		delete_transient( $key );
+
+		$this->do_export( $data['ids'], $data['format'] );
+	}
+
+	public function export_all_button( $post_type ) {
+		if ( self::POST_TYPE !== $post_type ) {
+			return;
+		}
+		$base_args = $_GET;
+		unset( $base_args['action'], $base_args['action2'], $base_args['_wpnonce'] );
+		foreach ( array( 'csv', 'json' ) as $format ) {
+			$url = wp_nonce_url(
+				add_query_arg( array_merge( $base_args, array( 'action' => 'ssw_export', 'export_all' => $format ) ), admin_url( 'admin-post.php' ) ),
+				'ssw_export_all'
+			);
+			printf(
+				'<a href="%s" class="button" style="margin-left:6px;">%s</a>',
+				esc_url( $url ),
+				esc_html( sprintf( __( 'Export all (%s)', 'strive-solutions-wizard' ), strtoupper( $format ) ) )
+			);
+		}
+	}
+
+	private function do_export( $post_ids, $format ) {
+		$rows = array();
+		foreach ( $post_ids as $id ) {
+			$solutions = json_decode( get_post_meta( $id, '_solutions', true ), true );
+			$rows[]    = array(
+				'id'                => $id,
+				'date'              => get_the_date( 'c', $id ),
+				'status'            => get_post_status( $id ),
+				'name'              => get_post_meta( $id, '_customer_name', true ),
+				'email'             => get_post_meta( $id, '_customer_email', true ),
+				'phone'             => get_post_meta( $id, '_customer_phone', true ),
+				'company'           => get_post_meta( $id, '_company_name', true ),
+				'tier'              => get_post_meta( $id, '_tier_chosen', true ),
+				'template'          => get_post_meta( $id, '_template_chosen', true ),
+				'domain'            => get_post_meta( $id, '_domain_chosen', true ),
+				'points_included'   => get_post_meta( $id, '_points_included', true ),
+				'points_used'       => get_post_meta( $id, '_points_used', true ),
+				'points_shortfall'  => get_post_meta( $id, '_points_shortfall', true ),
+				'solutions'         => $solutions ? wp_json_encode( $solutions ) : '',
+				'source_page_url'   => get_post_meta( $id, '_source_page_url', true ),
+			);
+		}
+
+		$filename = 'strive-submissions-' . gmdate( 'Y-m-d-His' ) . '.' . $format;
+
+		nocache_headers();
+		if ( 'json' === $format ) {
+			header( 'Content-Type: application/json; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+			echo wp_json_encode( $rows, JSON_PRETTY_PRINT );
+			exit;
+		}
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		$out = fopen( 'php://output', 'w' );
+		if ( ! empty( $rows ) ) {
+			fputcsv( $out, array_keys( $rows[0] ) );
+			foreach ( $rows as $row ) {
+				fputcsv( $out, $row );
+			}
+		}
+		fclose( $out );
+		exit;
+	}
+}
