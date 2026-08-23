@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * GET /wp-json/strive-solutions/v1/domain-search?q=example.com
+ * GET /wp-json/strivre-solutions/v1/domain-search?q=example.com
  *
  * Anonymous-accessible (visitors aren't logged in), so "security" here means:
  * a same-origin nonce so the endpoint isn't trivially hot-linked, and a
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SSW_REST_Domain_Search {
 
-	const NAMESPACE_ = 'strive-solutions/v1';
+	const NAMESPACE_ = 'strivre-solutions/v1';
 	const THROTTLE_SECONDS = 1.5;
 
 	private static $instance = null;
@@ -48,9 +48,9 @@ class SSW_REST_Domain_Search {
 	}
 
 	public function check_nonce( \WP_REST_Request $request ) {
-		$nonce = $request->get_header( 'X-SSW-Nonce' );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'ssw_wizard' ) ) {
-			return new WP_Error( 'ssw_bad_nonce', __( 'Invalid request.', 'strive-solutions-wizard' ), array( 'status' => 403 ) );
+		$nonce = $request->get_header( 'X-WP-Nonce' );
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return new WP_Error( 'ssw_bad_nonce', __( 'Invalid request.', 'strivre-solutions-wizard' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -58,7 +58,7 @@ class SSW_REST_Domain_Search {
 	public function handle( \WP_REST_Request $request ) {
 		$throttle_key = 'ssw_rl_' . md5( $this->client_ip() );
 		if ( get_transient( $throttle_key ) ) {
-			return new WP_Error( 'ssw_rate_limited', __( 'Please slow down a little.', 'strive-solutions-wizard' ), array( 'status' => 429 ) );
+			return new WP_Error( 'ssw_rate_limited', __( 'Please slow down a little.', 'strivre-solutions-wizard' ), array( 'status' => 429 ) );
 		}
 		set_transient( $throttle_key, 1, self::THROTTLE_SECONDS );
 

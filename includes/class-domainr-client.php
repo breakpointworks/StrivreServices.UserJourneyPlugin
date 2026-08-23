@@ -21,12 +21,12 @@ class SSW_Domainr_Client {
 	public function check( $query ) {
 		$query = strtolower( trim( $query ) );
 		if ( '' === $query ) {
-			return new WP_Error( 'ssw_empty_query', __( 'Please enter a domain to search.', 'strive-solutions-wizard' ) );
+			return new WP_Error( 'ssw_empty_query', __( 'Please enter a domain to search.', 'strivre-solutions-wizard' ) );
 		}
 
 		$api_key = SSW_Admin_Settings::get( 'domainr_api_key' );
 		if ( empty( $api_key ) ) {
-			return new WP_Error( 'ssw_no_api_key', __( 'Domain search is temporarily unavailable.', 'strive-solutions-wizard' ) );
+			return new WP_Error( 'ssw_no_api_key', __( 'Domain search is temporarily unavailable.', 'strivre-solutions-wizard' ) );
 		}
 
 		$cache_key = 'ssw_domainr_' . md5( $query );
@@ -125,15 +125,15 @@ class SSW_Domainr_Client {
 
 	private function decode( $response ) {
 		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'ssw_domainr_unreachable', __( 'Domain search is temporarily unavailable.', 'strive-solutions-wizard' ) );
+			return new WP_Error( 'ssw_domainr_unreachable', __( 'Domain search is temporarily unavailable.', 'strivre-solutions-wizard' ) );
 		}
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code < 200 || $code >= 300 ) {
-			return new WP_Error( 'ssw_domainr_error', __( 'Domain search is temporarily unavailable.', 'strive-solutions-wizard' ) );
+			return new WP_Error( 'ssw_domainr_error', __( 'Domain search is temporarily unavailable.', 'strivre-solutions-wizard' ) );
 		}
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $body ) ) {
-			return new WP_Error( 'ssw_domainr_bad_response', __( 'Domain search is temporarily unavailable.', 'strive-solutions-wizard' ) );
+			return new WP_Error( 'ssw_domainr_bad_response', __( 'Domain search is temporarily unavailable.', 'strivre-solutions-wizard' ) );
 		}
 		return $body;
 	}

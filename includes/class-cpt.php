@@ -4,15 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * The `strive_request` CPT: one post per wizard submission, plus the admin
+ * The `strivre_request` CPT: one post per wizard submission, plus the admin
  * list/detail screens (columns, read-only detail meta box, archive status,
  * CSV/JSON export). Submissions are records, not authored content, so there's
  * no editor and no front-end visibility.
  */
 class SSW_CPT {
 
-	const POST_TYPE      = 'strive_request';
-	const STATUS_ARCHIVED = 'strive-archived';
+	const POST_TYPE      = 'strivre_request';
+	const STATUS_ARCHIVED = 'strivre-archived';
 
 	private static $instance = null;
 
@@ -32,6 +32,7 @@ class SSW_CPT {
 		add_filter( 'list_table_primary_column', array( $this, 'primary_column' ), 10, 2 );
 		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 10, 2 );
 		add_filter( 'views_edit-' . self::POST_TYPE, array( $this, 'status_views' ) );
+		add_action( 'pre_get_posts', array( $this, 'include_archived_in_all_view' ) );
 
 		add_action( 'add_meta_boxes_' . self::POST_TYPE, array( $this, 'add_meta_box' ) );
 
@@ -40,7 +41,10 @@ class SSW_CPT {
 		add_action( 'admin_notices', array( $this, 'bulk_action_notices' ) );
 
 		add_action( 'admin_post_ssw_export', array( $this, 'stream_export' ) );
+		add_action( 'admin_post_ssw_archive', array( $this, 'handle_single_status_change' ) );
+		add_action( 'admin_post_ssw_restore', array( $this, 'handle_single_status_change' ) );
 		add_action( 'restrict_manage_posts', array( $this, 'export_all_button' ) );
+		add_action( 'admin_menu', array( $this, 'reposition_menu_below_elementor' ), 9999 );
 	}
 
 	public static function register_post_type() {
@@ -48,11 +52,11 @@ class SSW_CPT {
 			self::POST_TYPE,
 			array(
 				'labels'       => array(
-					'name'          => __( 'Strive Requests', 'strive-solutions-wizard' ),
-					'singular_name' => __( 'Strive Request', 'strive-solutions-wizard' ),
-					'all_items'     => __( 'Submissions', 'strive-solutions-wizard' ),
-					'edit_item'     => __( 'Submission Details', 'strive-solutions-wizard' ),
-					'search_items'  => __( 'Search Submissions', 'strive-solutions-wizard' ),
+					'name'          => __( 'Strivre Requests', 'strivre-solutions-wizard' ),
+					'singular_name' => __( 'Strivre Request', 'strivre-solutions-wizard' ),
+					'all_items'     => __( 'Submissions', 'strivre-solutions-wizard' ),
+					'edit_item'     => __( 'Submission Details', 'strivre-solutions-wizard' ),
+					'search_items'  => __( 'Search Submissions', 'strivre-solutions-wizard' ),
 				),
 				'public'       => false,
 				'show_ui'      => true,
@@ -67,18 +71,62 @@ class SSW_CPT {
 		);
 	}
 
+	/**
+	 * Runs after every plugin has registered its admin menu, so it finds
+	 * Elementor's actual slot regardless of what position it registered at,
+	 * and slots this plugin's top-level menu in immediately after it.
+	 *
+	 * Elementor registers two top-level entries both labelled "Elementor":
+	 * `elementor-home` (the prominent one near the top of the sidebar) and
+	 * `elementor` (a second, lower one). "Below Elementor" means below the
+	 * visible top one, so `elementor-home` is matched first.
+	 */
+	public function reposition_menu_below_elementor() {
+		global $menu;
+		$our_slug      = 'edit.php?post_type=' . self::POST_TYPE;
+		$our_pos       = null;
+		$elementor_pos = null;
+		foreach ( $menu as $position => $item ) {
+			if ( isset( $item[2] ) && $our_slug === $item[2] ) {
+				$our_pos = $position;
+			}
+			if ( isset( $item[2] ) && 'elementor-home' === $item[2] ) {
+				$elementor_pos = $position;
+			}
+		}
+		if ( null === $elementor_pos ) {
+			foreach ( $menu as $position => $item ) {
+				if ( isset( $item[2] ) && 'elementor' === $item[2] ) {
+					$elementor_pos = $position;
+					break;
+				}
+			}
+		}
+		if ( null === $our_pos || null === $elementor_pos ) {
+			return;
+		}
+		$our_item = $menu[ $our_pos ];
+		unset( $menu[ $our_pos ] );
+		$new_position = $elementor_pos + 0.001;
+		while ( isset( $menu[ $new_position ] ) ) {
+			$new_position += 0.001;
+		}
+		$menu[ $new_position ] = $our_item;
+		ksort( $menu );
+	}
+
 	public static function register_post_status() {
 		register_post_status(
 			self::STATUS_ARCHIVED,
 			array(
-				'label'                     => _x( 'Archived', 'submission status', 'strive-solutions-wizard' ),
+				'label'                     => _x( 'Archived', 'submission status', 'strivre-solutions-wizard' ),
 				'public'                    => false,
 				'internal'                  => false,
 				'exclude_from_search'       => true,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
 				/* translators: %s: number of archived submissions */
-				'label_count'               => _n_noop( 'Archived <span class="count">(%s)</span>', 'Archived <span class="count">(%s)</span>', 'strive-solutions-wizard' ),
+				'label_count'               => _n_noop( 'Archived <span class="count">(%s)</span>', 'Archived <span class="count">(%s)</span>', 'strivre-solutions-wizard' ),
 			)
 		);
 	}
@@ -92,13 +140,13 @@ class SSW_CPT {
 		return array_merge(
 			$columns,
 			array(
-				'ssw_name'    => __( 'Name', 'strive-solutions-wizard' ),
-				'ssw_email'   => __( 'Email', 'strive-solutions-wizard' ),
-				'ssw_company' => __( 'Company', 'strive-solutions-wizard' ),
-				'ssw_tier'    => __( 'Tier', 'strive-solutions-wizard' ),
-				'ssw_points'  => __( 'Points', 'strive-solutions-wizard' ),
-				'ssw_domain'  => __( 'Domain', 'strive-solutions-wizard' ),
-				'date'        => __( 'Date', 'strive-solutions-wizard' ),
+				'ssw_name'    => __( 'Name', 'strivre-solutions-wizard' ),
+				'ssw_email'   => __( 'Email', 'strivre-solutions-wizard' ),
+				'ssw_company' => __( 'Company', 'strivre-solutions-wizard' ),
+				'ssw_tier'    => __( 'Tier', 'strivre-solutions-wizard' ),
+				'ssw_points'  => __( 'Points', 'strivre-solutions-wizard' ),
+				'ssw_domain'  => __( 'Domain', 'strivre-solutions-wizard' ),
+				'date'        => __( 'Date', 'strivre-solutions-wizard' ),
 			)
 		);
 	}
@@ -154,13 +202,13 @@ class SSW_CPT {
 			$actions['ssw_restore'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $this->action_url( 'ssw_restore', $post->ID ) ),
-				esc_html__( 'Restore', 'strive-solutions-wizard' )
+				esc_html__( 'Restore', 'strivre-solutions-wizard' )
 			);
 		} else {
 			$actions['ssw_archive'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( $this->action_url( 'ssw_archive', $post->ID ) ),
-				esc_html__( 'Archive', 'strive-solutions-wizard' )
+				esc_html__( 'Archive', 'strivre-solutions-wizard' )
 			);
 		}
 		return $actions;
@@ -173,32 +221,36 @@ class SSW_CPT {
 					'action' => $action,
 					'post'   => $post_id,
 				),
-				admin_url( 'edit.php?post_type=' . self::POST_TYPE )
+				admin_url( 'admin-post.php' )
 			),
 			$action . '_' . $post_id
 		);
 	}
 
+	/**
+	 * WordPress never includes a custom post status in the admin "All" view's
+	 * default query, regardless of show_in_admin_all_list — that flag only
+	 * affects whether a count/link shows in the views row. Without this,
+	 * archived submissions would look like they vanished from "All".
+	 */
+	public function include_archived_in_all_view( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+		if ( self::POST_TYPE !== $query->get( 'post_type' ) ) {
+			return;
+		}
+		if ( empty( $_GET['post_status'] ) ) {
+			$query->set( 'post_status', array( 'publish', self::STATUS_ARCHIVED ) );
+		}
+	}
+
 	public function status_views( $views ) {
-		$archived_count = wp_count_posts( self::POST_TYPE )->{self::STATUS_ARCHIVED} ?? 0;
-		$class          = ( isset( $_GET['post_status'] ) && self::STATUS_ARCHIVED === $_GET['post_status'] ) ? ' class="current"' : '';
-		$url            = add_query_arg(
-			array(
-				'post_type'   => self::POST_TYPE,
-				'post_status' => self::STATUS_ARCHIVED,
-			),
-			admin_url( 'edit.php' )
-		);
-		$views['ssw_archived'] = sprintf(
-			'<a href="%s"%s>%s <span class="count">(%d)</span></a>',
-			esc_url( $url ),
-			$class,
-			esc_html__( 'Archived', 'strive-solutions-wizard' ),
-			(int) $archived_count
-		);
+		// Core already auto-generates an "Archived" view because the status is
+		// registered with show_in_admin_status_list => true — only the
+		// "Published" -> "New" relabel needs doing here.
 		if ( isset( $views['publish'] ) ) {
-			$views['publish'] = str_replace( '>' . __( 'Published' ), '>' . __( 'New', 'strive-solutions-wizard' ), $views['publish'] );
-			$views['publish'] = preg_replace( '/Published(?!\s*<span)/', __( 'New', 'strive-solutions-wizard' ), $views['publish'] );
+			$views['publish'] = preg_replace( '/>' . preg_quote( __( 'Published' ), '/' ) . '(\s|<)/', '>' . esc_html__( 'New', 'strivre-solutions-wizard' ) . '$1', $views['publish'], 1 );
 		}
 		return $views;
 	}
@@ -211,7 +263,7 @@ class SSW_CPT {
 		remove_post_type_support( self::POST_TYPE, 'editor' );
 		add_meta_box(
 			'ssw_submission_details',
-			__( 'Submission Details', 'strive-solutions-wizard' ),
+			__( 'Submission Details', 'strivre-solutions-wizard' ),
 			array( $this, 'render_meta_box' ),
 			self::POST_TYPE,
 			'normal',
@@ -221,17 +273,17 @@ class SSW_CPT {
 
 	public function render_meta_box( $post ) {
 		$fields = array(
-			__( 'Name', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_name', true ),
-			__( 'Email', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_email', true ),
-			__( 'Phone', 'strive-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_phone', true ),
-			__( 'Company', 'strive-solutions-wizard' )            => get_post_meta( $post->ID, '_company_name', true ),
-			__( 'Package Tier', 'strive-solutions-wizard' )       => get_post_meta( $post->ID, '_tier_chosen', true ),
-			__( 'Website Template', 'strive-solutions-wizard' )   => get_post_meta( $post->ID, '_template_chosen', true ),
-			__( 'Domain', 'strive-solutions-wizard' )             => get_post_meta( $post->ID, '_domain_chosen', true ),
-			__( 'Points Included', 'strive-solutions-wizard' )    => get_post_meta( $post->ID, '_points_included', true ),
-			__( 'Points Used', 'strive-solutions-wizard' )        => get_post_meta( $post->ID, '_points_used', true ),
-			__( 'Points Shortfall', 'strive-solutions-wizard' )   => get_post_meta( $post->ID, '_points_shortfall', true ),
-			__( 'Source Page', 'strive-solutions-wizard' )        => get_post_meta( $post->ID, '_source_page_url', true ),
+			__( 'Name', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_name', true ),
+			__( 'Email', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_email', true ),
+			__( 'Phone', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_phone', true ),
+			__( 'Company', 'strivre-solutions-wizard' )            => get_post_meta( $post->ID, '_company_name', true ),
+			__( 'Package Tier', 'strivre-solutions-wizard' )       => get_post_meta( $post->ID, '_tier_chosen', true ),
+			__( 'Website Template', 'strivre-solutions-wizard' )   => get_post_meta( $post->ID, '_template_chosen', true ),
+			__( 'Domain', 'strivre-solutions-wizard' )             => get_post_meta( $post->ID, '_domain_chosen', true ),
+			__( 'Points Included', 'strivre-solutions-wizard' )    => get_post_meta( $post->ID, '_points_included', true ),
+			__( 'Points Used', 'strivre-solutions-wizard' )        => get_post_meta( $post->ID, '_points_used', true ),
+			__( 'Points Shortfall', 'strivre-solutions-wizard' )   => get_post_meta( $post->ID, '_points_shortfall', true ),
+			__( 'Source Page', 'strivre-solutions-wizard' )        => get_post_meta( $post->ID, '_source_page_url', true ),
 		);
 
 		echo '<table class="widefat striped"><tbody>';
@@ -241,15 +293,15 @@ class SSW_CPT {
 		echo '</tbody></table>';
 
 		$solutions = json_decode( get_post_meta( $post->ID, '_solutions', true ), true );
-		echo '<h3 style="margin-top:20px;">' . esc_html__( 'Selected Solutions', 'strive-solutions-wizard' ) . '</h3>';
+		echo '<h3 style="margin-top:20px;">' . esc_html__( 'Selected Solutions', 'strivre-solutions-wizard' ) . '</h3>';
 		if ( $solutions ) {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strive-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strive-solutions-wizard' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
 			foreach ( $solutions as $item ) {
 				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
 		} else {
-			echo '<p>' . esc_html__( 'None selected.', 'strive-solutions-wizard' ) . '</p>';
+			echo '<p>' . esc_html__( 'None selected.', 'strivre-solutions-wizard' ) . '</p>';
 		}
 	}
 
@@ -259,10 +311,10 @@ class SSW_CPT {
 
 	public function bulk_actions( $actions ) {
 		unset( $actions['edit'] );
-		$actions['ssw_archive']     = __( 'Archive', 'strive-solutions-wizard' );
-		$actions['ssw_restore']     = __( 'Restore', 'strive-solutions-wizard' );
-		$actions['ssw_export_csv']  = __( 'Export to CSV', 'strive-solutions-wizard' );
-		$actions['ssw_export_json'] = __( 'Export to JSON', 'strive-solutions-wizard' );
+		$actions['ssw_archive']     = __( 'Archive', 'strivre-solutions-wizard' );
+		$actions['ssw_restore']     = __( 'Restore', 'strivre-solutions-wizard' );
+		$actions['ssw_export_csv']  = __( 'Export to CSV', 'strivre-solutions-wizard' );
+		$actions['ssw_export_json'] = __( 'Export to JSON', 'strivre-solutions-wizard' );
 		return $actions;
 	}
 
@@ -302,35 +354,38 @@ class SSW_CPT {
 
 	public function bulk_action_notices() {
 		if ( ! empty( $_GET['ssw_archived'] ) ) {
-			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission archived.', '%d submissions archived.', (int) $_GET['ssw_archived'], 'strive-solutions-wizard' ), (int) $_GET['ssw_archived'] ) ) );
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission archived.', '%d submissions archived.', (int) $_GET['ssw_archived'], 'strivre-solutions-wizard' ), (int) $_GET['ssw_archived'] ) ) );
 		}
 		if ( ! empty( $_GET['ssw_restored'] ) ) {
-			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission restored.', '%d submissions restored.', (int) $_GET['ssw_restored'], 'strive-solutions-wizard' ), (int) $_GET['ssw_restored'] ) ) );
+			printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( sprintf( _n( '%d submission restored.', '%d submissions restored.', (int) $_GET['ssw_restored'], 'strivre-solutions-wizard' ), (int) $_GET['ssw_restored'] ) ) );
 		}
 	}
 
 	/**
-	 * Handles single-row Archive/Restore links from row_actions(), and the
-	 * redirect step for bulk CSV/JSON export (streams the file and exits).
+	 * Handles single-row Archive/Restore links from row_actions() — these
+	 * hit admin-post.php?action=ssw_archive|ssw_restore directly.
+	 */
+	public function handle_single_status_change() {
+		$action  = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+		$post_id = absint( $_GET['post'] ?? 0 );
+		check_admin_referer( $action . '_' . $post_id );
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'strivre-solutions-wizard' ) );
+		}
+		wp_update_post( array( 'ID' => $post_id, 'post_status' => 'ssw_archive' === $action ? self::STATUS_ARCHIVED : 'publish' ) );
+		wp_safe_redirect( admin_url( 'edit.php?post_type=' . self::POST_TYPE ) );
+		exit;
+	}
+
+	/**
+	 * Handles the redirect step for bulk/"export all" CSV/JSON export
+	 * (streams the file and exits). Reached via admin-post.php?action=ssw_export.
 	 */
 	public function stream_export() {
-		$action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
-
-		if ( 'ssw_archive' === $action || 'ssw_restore' === $action ) {
-			$post_id = absint( $_GET['post'] ?? 0 );
-			check_admin_referer( $action . '_' . $post_id );
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
-			}
-			wp_update_post( array( 'ID' => $post_id, 'post_status' => 'ssw_archive' === $action ? self::STATUS_ARCHIVED : 'publish' ) );
-			wp_safe_redirect( admin_url( 'edit.php?post_type=' . self::POST_TYPE ) );
-			exit;
-		}
-
 		if ( isset( $_GET['export_all'] ) ) {
 			check_admin_referer( 'ssw_export_all' );
 			if ( ! current_user_can( 'edit_posts' ) ) {
-				wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
+				wp_die( esc_html__( 'You are not allowed to do that.', 'strivre-solutions-wizard' ) );
 			}
 			$format = 'json' === $_GET['export_all'] ? 'json' : 'csv';
 			$query_args = array(
@@ -348,12 +403,12 @@ class SSW_CPT {
 		$key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		check_admin_referer( 'ssw_export_' . $key );
 		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_die( esc_html__( 'You are not allowed to do that.', 'strive-solutions-wizard' ) );
+			wp_die( esc_html__( 'You are not allowed to do that.', 'strivre-solutions-wizard' ) );
 		}
 
 		$data = get_transient( $key );
 		if ( ! $data ) {
-			wp_die( esc_html__( 'This export link has expired. Please try again.', 'strive-solutions-wizard' ) );
+			wp_die( esc_html__( 'This export link has expired. Please try again.', 'strivre-solutions-wizard' ) );
 		}
 		delete_transient( $key );
 
@@ -374,7 +429,7 @@ class SSW_CPT {
 			printf(
 				'<a href="%s" class="button" style="margin-left:6px;">%s</a>',
 				esc_url( $url ),
-				esc_html( sprintf( __( 'Export all (%s)', 'strive-solutions-wizard' ), strtoupper( $format ) ) )
+				esc_html( sprintf( __( 'Export all (%s)', 'strivre-solutions-wizard' ), strtoupper( $format ) ) )
 			);
 		}
 	}
@@ -402,7 +457,7 @@ class SSW_CPT {
 			);
 		}
 
-		$filename = 'strive-submissions-' . gmdate( 'Y-m-d-His' ) . '.' . $format;
+		$filename = 'strivre-submissions-' . gmdate( 'Y-m-d-His' ) . '.' . $format;
 
 		nocache_headers();
 		if ( 'json' === $format ) {

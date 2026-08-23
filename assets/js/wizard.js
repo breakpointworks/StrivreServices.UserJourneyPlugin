@@ -233,12 +233,14 @@
 			results.appendChild( el( 'p', {}, [ 'Checking…' ] ) );
 
 			fetch( this.config.restUrl + '/domain-search?q=' + encodeURIComponent( q ), {
-				headers: { 'X-SSW-Nonce': this.config.nonce },
+				headers: { 'X-WP-Nonce': this.config.nonce },
 			} )
-				.then( function ( r ) { return r.json(); } )
-				.then( function ( data ) {
+				.then( function ( r ) { return r.json().then( function ( data ) { return { ok: r.ok, data: data }; } ); } )
+				.then( function ( res ) {
+					var data = res.data;
 					results.innerHTML = '';
-					if ( data.error ) {
+					if ( ! res.ok || data.error ) {
+						if ( ! data.error ) data.error = 'Domain search is temporarily unavailable.';
 						results.appendChild( el( 'div', { class: 'ssw-domain-result error' }, [ data.error ] ) );
 						return;
 					}
@@ -424,7 +426,7 @@
 
 			fetch( this.config.restUrl + '/submit', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json', 'X-SSW-Nonce': this.config.nonce },
+				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.config.nonce },
 				body: JSON.stringify( payload ),
 			} )
 				.then( function ( r ) { return r.json().then( function ( data ) { return { ok: r.ok, data: data }; } ); } )
@@ -512,9 +514,33 @@
 		return lb;
 	};
 
-	document.addEventListener( 'DOMContentLoaded', function () {
-		document.querySelectorAll( '.ssw-wizard[data-config]' ).forEach( function ( root ) {
+	function initWizardsIn( scope ) {
+		( scope || document ).querySelectorAll( '.ssw-wizard[data-config]:not([data-ssw-ready])' ).forEach( function ( root ) {
+			root.setAttribute( 'data-ssw-ready', '1' );
 			new SSWWizard( root );
 		} );
+	}
+
+	// Elementor renders widgets dynamically (editor preview, popups, AJAX
+	// content) after the page's initial DOMContentLoaded already fired, so
+	// that event alone would miss them — hook Elementor's own per-widget
+	// ready event as the primary trigger, with DOMContentLoaded as a plain
+	// front-end fallback for when Elementor's frontend JS isn't present.
+	document.addEventListener( 'DOMContentLoaded', function () {
+		initWizardsIn( document );
 	} );
+	if ( 'loading' !== document.readyState ) {
+		initWizardsIn( document );
+	}
+
+	function hookElementor() {
+		window.elementorFrontend.hooks.addAction( 'frontend/element_ready/ssw-solutions-wizard.default', function ( $scope ) {
+			initWizardsIn( $scope[ 0 ] );
+		} );
+	}
+	if ( window.elementorFrontend && window.elementorFrontend.hooks ) {
+		hookElementor();
+	} else {
+		window.addEventListener( 'elementor/frontend/init', hookElementor );
+	}
 } )();

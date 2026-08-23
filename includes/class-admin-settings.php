@@ -48,9 +48,10 @@ class SSW_Admin_Settings {
 	}
 
 	public function add_settings_page() {
-		add_options_page(
-			__( 'Strive Solutions Wizard', 'strive-solutions-wizard' ),
-			__( 'Strive Solutions', 'strive-solutions-wizard' ),
+		add_submenu_page(
+			'edit.php?post_type=' . SSW_CPT::POST_TYPE,
+			__( 'Strivre Solutions Wizard', 'strivre-solutions-wizard' ),
+			__( 'Settings', 'strivre-solutions-wizard' ),
 			'manage_options',
 			'ssw-settings',
 			array( $this, 'render_settings_page' )
@@ -83,69 +84,69 @@ class SSW_Admin_Settings {
 		$s = wp_parse_args( get_option( self::OPTION_KEY, array() ), self::defaults() );
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'Strive Solutions Wizard — Settings', 'strive-solutions-wizard' ); ?></h1>
-			<p><?php esc_html_e( 'Site-wide settings only. Package tiers, the solutions catalog, points, and template images are configured per-page inside the Elementor widget itself.', 'strive-solutions-wizard' ); ?></p>
+			<h1><?php esc_html_e( 'Strivre Solutions Wizard — Settings', 'strivre-solutions-wizard' ); ?></h1>
+			<p><?php esc_html_e( 'Site-wide settings only. Package tiers, the solutions catalog, points, and template images are configured per-page inside the Elementor widget itself.', 'strivre-solutions-wizard' ); ?></p>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'ssw_settings_group' ); ?>
-				<h2 class="title"><?php esc_html_e( 'Notifications', 'strive-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Notifications', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><label for="ssw_notification_emails"><?php esc_html_e( 'Notify these emails', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_notification_emails"><?php esc_html_e( 'Notify these emails', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_notification_emails" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[notification_emails]" value="<?php echo esc_attr( $s['notification_emails'] ); ?>" />
-						<p class="description"><?php esc_html_e( 'Comma-separated. Staff who should be alerted on every submission.', 'strive-solutions-wizard' ); ?></p></td>
+						<p class="description"><?php esc_html_e( 'Comma-separated. Staff who should be alerted on every submission.', 'strivre-solutions-wizard' ); ?></p></td>
 					</tr>
 					<tr>
-						<th><label for="ssw_from_name"><?php esc_html_e( 'From name', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_from_name"><?php esc_html_e( 'From name', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_from_name" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[from_name]" value="<?php echo esc_attr( $s['from_name'] ); ?>" /></td>
 					</tr>
 					<tr>
-						<th><label for="ssw_from_email"><?php esc_html_e( 'From email', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_from_email"><?php esc_html_e( 'From email', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="email" id="ssw_from_email" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[from_email]" value="<?php echo esc_attr( $s['from_email'] ); ?>" /></td>
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Domain search (Domainr / RapidAPI)', 'strive-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Domain search (Domainr / RapidAPI)', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><label for="ssw_domainr_api_key"><?php esc_html_e( 'RapidAPI key', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_domainr_api_key"><?php esc_html_e( 'RapidAPI key', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_domainr_api_key" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[domainr_api_key]" value="<?php echo esc_attr( $s['domainr_api_key'] ); ?>" autocomplete="off" />
-						<p class="description"><?php esc_html_e( 'Without a key, the domain search step shows a graceful "temporarily unavailable" message rather than failing.', 'strive-solutions-wizard' ); ?></p></td>
+						<p class="description"><?php esc_html_e( 'Without a key, the domain search step shows a graceful "temporarily unavailable" message rather than failing.', 'strivre-solutions-wizard' ); ?></p></td>
 					</tr>
 					<tr>
-						<th><label for="ssw_domainr_api_host"><?php esc_html_e( 'RapidAPI host', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_domainr_api_host"><?php esc_html_e( 'RapidAPI host', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_domainr_api_host" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[domainr_api_host]" value="<?php echo esc_attr( $s['domainr_api_host'] ); ?>" /></td>
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Spam guard', 'strive-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Spam guard', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><?php esc_html_e( 'Honeypot + minimum time-on-form', 'strive-solutions-wizard' ); ?></th>
-						<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[spam_guard_enabled]" value="1" <?php checked( $s['spam_guard_enabled'], 1 ); ?> /> <?php esc_html_e( 'Enabled', 'strive-solutions-wizard' ); ?></label></td>
+						<th><?php esc_html_e( 'Honeypot + minimum time-on-form', 'strivre-solutions-wizard' ); ?></th>
+						<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[spam_guard_enabled]" value="1" <?php checked( $s['spam_guard_enabled'], 1 ); ?> /> <?php esc_html_e( 'Enabled', 'strivre-solutions-wizard' ); ?></label></td>
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Admin notification email', 'strive-solutions-wizard' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url}', 'strive-solutions-wizard' ); ?></p>
+				<h2 class="title"><?php esc_html_e( 'Admin notification email', 'strivre-solutions-wizard' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url}', 'strivre-solutions-wizard' ); ?></p>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><label for="ssw_admin_email_subject"><?php esc_html_e( 'Subject', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_admin_email_subject"><?php esc_html_e( 'Subject', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_admin_email_subject" class="large-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[admin_email_subject]" value="<?php echo esc_attr( $s['admin_email_subject'] ); ?>" /></td>
 					</tr>
 					<tr>
-						<th><label for="ssw_admin_email_body"><?php esc_html_e( 'Body', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_admin_email_body"><?php esc_html_e( 'Body', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><textarea id="ssw_admin_email_body" class="large-text" rows="8" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[admin_email_body]"><?php echo esc_textarea( $s['admin_email_body'] ); ?></textarea></td>
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Customer confirmation email', 'strive-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Customer confirmation email', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><label for="ssw_customer_email_subject"><?php esc_html_e( 'Subject', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_customer_email_subject"><?php esc_html_e( 'Subject', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_customer_email_subject" class="large-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[customer_email_subject]" value="<?php echo esc_attr( $s['customer_email_subject'] ); ?>" /></td>
 					</tr>
 					<tr>
-						<th><label for="ssw_customer_email_body"><?php esc_html_e( 'Body', 'strive-solutions-wizard' ); ?></label></th>
+						<th><label for="ssw_customer_email_body"><?php esc_html_e( 'Body', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><textarea id="ssw_customer_email_body" class="large-text" rows="8" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[customer_email_body]"><?php echo esc_textarea( $s['customer_email_body'] ); ?></textarea></td>
 					</tr>
 				</table>

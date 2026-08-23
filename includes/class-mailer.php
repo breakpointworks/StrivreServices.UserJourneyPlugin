@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sends the two notification emails (admin + customer) via wp_mail(),
  * substituting merge tags into the templates configured in
- * Settings → Strive Solutions.
+ * Strivre Requests → Settings.
  */
 class SSW_Mailer {
 
@@ -44,8 +44,8 @@ class SSW_Mailer {
 			'{tier}'              => $data['tier'] ?? '',
 			'{points_included}'   => (string) ( $data['points_included'] ?? 0 ),
 			'{template}'          => $data['template'] ?? '',
-			'{domain}'            => $data['domain'] ?: __( 'not selected', 'strive-solutions-wizard' ),
-			'{solutions}'         => $solutions_lines ? implode( "\n", $solutions_lines ) : __( 'none selected', 'strive-solutions-wizard' ),
+			'{domain}'            => $data['domain'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
+			'{solutions}'         => $solutions_lines ? implode( "\n", $solutions_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
 			'{points_used}'       => (string) ( $data['points_used'] ?? 0 ),
 			'{points_shortfall}'  => (string) ( $data['points_shortfall'] ?? 0 ),
 			'{page_url}'          => $data['page_url'] ?? '',

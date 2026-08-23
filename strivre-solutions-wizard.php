@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Strive Solutions Wizard
+ * Plugin Name: Strivre Solutions Wizard
  * Description: Elementor widget for Strivre Services' Solutions page — a multi-step configurator (package tier, website template, domain search, solutions/points selection, checkout) that emails staff and the customer on submission.
  * Version: 0.1.0
  * Author: Strivre Services
- * Text Domain: strive-solutions-wizard
+ * Text Domain: strivre-solutions-wizard
  * Requires PHP: 7.4
  */
 
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SSW_VERSION', '0.1.0' );
+define( 'SSW_VERSION', '0.1.2' );
 define( 'SSW_PLUGIN_FILE', __FILE__ );
 define( 'SSW_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SSW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -28,7 +28,7 @@ require_once SSW_PLUGIN_DIR . 'includes/class-rest-submit.php';
  * Main plugin bootstrap. Everything else is wired up from here so activation,
  * Elementor detection, and asset loading all happen in one obvious place.
  */
-final class Strive_Solutions_Wizard {
+final class Strivre_Solutions_Wizard {
 
 	private static $instance = null;
 
@@ -78,7 +78,7 @@ final class Strive_Solutions_Wizard {
 	 */
 	public function register_assets() {
 		wp_register_style( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/css/wizard.css', array(), SSW_VERSION );
-		wp_register_script( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/js/wizard.js', array(), SSW_VERSION, true );
+		wp_register_script( 'ssw-wizard', SSW_PLUGIN_URL . 'assets/js/wizard.js', array( 'elementor-frontend' ), SSW_VERSION, true );
 	}
 
 	public function register_widget( $widgets_manager ) {
@@ -88,9 +88,9 @@ final class Strive_Solutions_Wizard {
 
 	public function register_category( $elements_manager ) {
 		$elements_manager->add_category(
-			'strive',
+			'strivre',
 			array(
-				'title' => __( 'Strive', 'strive-solutions-wizard' ),
+				'title' => __( 'Strivre', 'strivre-solutions-wizard' ),
 				'icon'  => 'eicon-form-horizontal',
 			)
 		);
@@ -101,9 +101,9 @@ final class Strive_Solutions_Wizard {
 			return;
 		}
 		echo '<div class="notice notice-warning"><p>';
-		esc_html_e( 'Strive Solutions Wizard requires Elementor to be installed and active. The plugin is otherwise idle.', 'strive-solutions-wizard' );
+		esc_html_e( 'Strivre Solutions Wizard requires Elementor to be installed and active. The plugin is otherwise idle.', 'strivre-solutions-wizard' );
 		echo '</p></div>';
 	}
 }
 
-Strive_Solutions_Wizard::instance();
+Strivre_Solutions_Wizard::instance();

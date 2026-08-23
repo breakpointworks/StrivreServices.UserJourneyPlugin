@@ -22,7 +22,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	}
 
 	public function get_title() {
-		return __( 'Strive Solutions Wizard', 'strive-solutions-wizard' );
+		return __( 'Strivre Solutions Wizard', 'strivre-solutions-wizard' );
 	}
 
 	public function get_icon() {
@@ -30,7 +30,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	}
 
 	public function get_categories() {
-		return array( 'strive' );
+		return array( 'strivre' );
 	}
 
 	public function get_script_depends() {
@@ -60,7 +60,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_steps',
 			array(
-				'label' => __( 'Wizard Steps', 'strive-solutions-wizard' ),
+				'label' => __( 'Wizard Steps', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
 			)
 		);
@@ -68,32 +68,32 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'enable_tier_step',
 			array(
-				'label'        => __( 'Enable Package Tier + Website Template step', 'strive-solutions-wizard' ),
+				'label'        => __( 'Enable Package Tier + Website Template step', 'strivre-solutions-wizard' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'default'      => 'yes',
-				'label_on'     => __( 'On', 'strive-solutions-wizard' ),
-				'label_off'    => __( 'Off', 'strive-solutions-wizard' ),
+				'label_on'     => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off'    => __( 'Off', 'strivre-solutions-wizard' ),
 			)
 		);
 
 		$this->add_control(
 			'enable_domain_step',
 			array(
-				'label'     => __( 'Enable Domain Search step', 'strive-solutions-wizard' ),
+				'label'     => __( 'Enable Domain Search step', 'strivre-solutions-wizard' ),
 				'type'      => Controls_Manager::SWITCHER,
 				'default'   => 'yes',
-				'label_on'  => __( 'On', 'strive-solutions-wizard' ),
-				'label_off' => __( 'Off', 'strive-solutions-wizard' ),
+				'label_on'  => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off' => __( 'Off', 'strivre-solutions-wizard' ),
 			)
 		);
 
 		$this->add_control(
 			'preselect_param',
 			array(
-				'label'       => __( 'URL preselect parameter name', 'strive-solutions-wizard' ),
+				'label'       => __( 'URL preselect parameter name', 'strivre-solutions-wizard' ),
 				'type'        => Controls_Manager::TEXT,
 				'default'     => 'solution',
-				'description' => __( 'e.g. ?solution=crm-solutions will pre-check the matching solution card by its Slug field.', 'strive-solutions-wizard' ),
+				'description' => __( 'e.g. ?solution=crm-solutions will pre-check the matching solution card by its Slug field.', 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -108,7 +108,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_tiers',
 			array(
-				'label'     => __( 'Package Tiers', 'strive-solutions-wizard' ),
+				'label'     => __( 'Package Tiers', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
 				'condition' => array( 'enable_tier_step' => 'yes' ),
 			)
@@ -119,29 +119,29 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'tier_title',
 			array(
-				'label'   => __( 'Title', 'strive-solutions-wizard' ),
+				'label'   => __( 'Title', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXT,
-				'default' => __( 'Tier', 'strive-solutions-wizard' ),
+				'default' => __( 'Tier', 'strivre-solutions-wizard' ),
 			)
 		);
 		$repeater->add_control(
 			'tier_tagline',
 			array(
-				'label'   => __( 'Tagline', 'strive-solutions-wizard' ),
+				'label'   => __( 'Tagline', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXT,
 			)
 		);
 		$repeater->add_control(
 			'tier_description',
 			array(
-				'label' => __( 'Description', 'strive-solutions-wizard' ),
+				'label' => __( 'Description', 'strivre-solutions-wizard' ),
 				'type'  => Controls_Manager::TEXTAREA,
 			)
 		);
 		$repeater->add_control(
 			'tier_points',
 			array(
-				'label'   => __( 'Points included', 'strive-solutions-wizard' ),
+				'label'   => __( 'Points included', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::NUMBER,
 				'default' => 0,
 			)
@@ -149,7 +149,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'tier_template_image',
 			array(
-				'label'   => __( 'Template thumbnail', 'strive-solutions-wizard' ),
+				'label'   => __( 'Template thumbnail', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::MEDIA,
 				'default' => array( 'url' => SSW_PLUGIN_URL . 'assets/img/placeholder-template.svg' ),
 			)
@@ -157,7 +157,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'tier_gallery',
 			array(
-				'label' => __( 'Lightbox gallery images', 'strive-solutions-wizard' ),
+				'label' => __( 'Lightbox gallery images', 'strivre-solutions-wizard' ),
 				'type'  => Controls_Manager::GALLERY,
 			)
 		);
@@ -165,7 +165,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'tiers',
 			array(
-				'label'       => __( 'Tiers', 'strive-solutions-wizard' ),
+				'label'       => __( 'Tiers', 'strivre-solutions-wizard' ),
 				'type'        => Controls_Manager::REPEATER,
 				'fields'      => $repeater->get_controls(),
 				'title_field' => '{{{ tier_title }}}',
@@ -203,7 +203,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_domain',
 			array(
-				'label'     => __( 'Domain Search', 'strive-solutions-wizard' ),
+				'label'     => __( 'Domain Search', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
 				'condition' => array( 'enable_domain_step' => 'yes' ),
 			)
@@ -212,9 +212,9 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'domain_heading',
 			array(
-				'label'   => __( 'Heading', 'strive-solutions-wizard' ),
+				'label'   => __( 'Heading', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXT,
-				'default' => __( "Let's find your domain", 'strive-solutions-wizard' ),
+				'default' => __( "Let's find your domain", 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -229,7 +229,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_solutions',
 			array(
-				'label' => __( 'Solutions Catalog', 'strive-solutions-wizard' ),
+				'label' => __( 'Solutions Catalog', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
 			)
 		);
@@ -239,29 +239,29 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'sol_icon',
 			array(
-				'label' => __( 'Icon', 'strive-solutions-wizard' ),
+				'label' => __( 'Icon', 'strivre-solutions-wizard' ),
 				'type'  => Controls_Manager::MEDIA,
 			)
 		);
 		$repeater->add_control(
 			'sol_title',
 			array(
-				'label'   => __( 'Title', 'strive-solutions-wizard' ),
+				'label'   => __( 'Title', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXT,
-				'default' => __( 'Solution', 'strive-solutions-wizard' ),
+				'default' => __( 'Solution', 'strivre-solutions-wizard' ),
 			)
 		);
 		$repeater->add_control(
 			'sol_description',
 			array(
-				'label' => __( 'Short description', 'strive-solutions-wizard' ),
+				'label' => __( 'Short description', 'strivre-solutions-wizard' ),
 				'type'  => Controls_Manager::TEXTAREA,
 			)
 		);
 		$repeater->add_control(
 			'sol_points',
 			array(
-				'label'   => __( 'Points cost', 'strive-solutions-wizard' ),
+				'label'   => __( 'Points cost', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::NUMBER,
 				'default' => 0,
 			)
@@ -269,14 +269,14 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'sol_slug',
 			array(
-				'label'       => __( 'Slug (for ?solution= deep links)', 'strive-solutions-wizard' ),
+				'label'       => __( 'Slug (for ?solution= deep links)', 'strivre-solutions-wizard' ),
 				'type'        => Controls_Manager::TEXT,
 			)
 		);
 		$repeater->add_control(
 			'sol_enabled',
 			array(
-				'label'     => __( 'Enabled', 'strive-solutions-wizard' ),
+				'label'     => __( 'Enabled', 'strivre-solutions-wizard' ),
 				'type'      => Controls_Manager::SWITCHER,
 				'default'   => 'yes',
 			)
@@ -284,7 +284,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$repeater->add_control(
 			'sol_default_checked',
 			array(
-				'label'     => __( 'Checked by default', 'strive-solutions-wizard' ),
+				'label'     => __( 'Checked by default', 'strivre-solutions-wizard' ),
 				'type'      => Controls_Manager::SWITCHER,
 				'default'   => '',
 			)
@@ -293,7 +293,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'solutions',
 			array(
-				'label'       => __( 'Solutions', 'strive-solutions-wizard' ),
+				'label'       => __( 'Solutions', 'strivre-solutions-wizard' ),
 				'type'        => Controls_Manager::REPEATER,
 				'fields'      => $repeater->get_controls(),
 				'title_field' => '{{{ sol_title }}}',
@@ -330,16 +330,16 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_checkout',
 			array(
-				'label' => __( 'Checkout Form', 'strive-solutions-wizard' ),
+				'label' => __( 'Checkout Form', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
 			)
 		);
 
 		foreach ( array(
-			'name'    => __( 'Name required', 'strive-solutions-wizard' ),
-			'email'   => __( 'Email required', 'strive-solutions-wizard' ),
-			'phone'   => __( 'Phone required', 'strive-solutions-wizard' ),
-			'company' => __( 'Company required', 'strive-solutions-wizard' ),
+			'name'    => __( 'Name required', 'strivre-solutions-wizard' ),
+			'email'   => __( 'Email required', 'strivre-solutions-wizard' ),
+			'phone'   => __( 'Phone required', 'strivre-solutions-wizard' ),
+			'company' => __( 'Company required', 'strivre-solutions-wizard' ),
 		) as $field => $label ) {
 			$this->add_control(
 				'field_' . $field . '_required',
@@ -354,9 +354,9 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'success_message',
 			array(
-				'label'   => __( 'Success message', 'strive-solutions-wizard' ),
+				'label'   => __( 'Success message', 'strivre-solutions-wizard' ),
 				'type'    => Controls_Manager::TEXTAREA,
-				'default' => __( "Thanks! We've got your request — our team will send you a business proposal within 24 hours.", 'strive-solutions-wizard' ),
+				'default' => __( "Thanks! We've got your request — our team will send you a business proposal within 24 hours.", 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -371,21 +371,21 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_colors',
 			array(
-				'label' => __( 'Colors', 'strive-solutions-wizard' ),
+				'label' => __( 'Colors', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
 
 		$colors = array(
-			'primary_color'          => array( __( 'Primary', 'strive-solutions-wizard' ), '#002144', '--ssw-primary' ),
-			'secondary_color'        => array( __( 'Secondary / Accent', 'strive-solutions-wizard' ), '#801414', '--ssw-secondary' ),
-			'text_color'             => array( __( 'Text', 'strive-solutions-wizard' ), '#1E2933', '--ssw-text' ),
-			'background_color'       => array( __( 'Background', 'strive-solutions-wizard' ), '#F4F6F8', '--ssw-bg' ),
-			'surface_color'          => array( __( 'Card surface', 'strive-solutions-wizard' ), '#FFFFFF', '--ssw-surface' ),
-			'border_color'           => array( __( 'Border', 'strive-solutions-wizard' ), '#64748B', '--ssw-border' ),
-			'selected_tint_color'    => array( __( 'Selected card tint', 'strive-solutions-wizard' ), '#F6EAEA', '--ssw-selected-tint' ),
-			'points_ok_color'        => array( __( 'Points balance (OK)', 'strive-solutions-wizard' ), '#17845A', '--ssw-points-ok' ),
-			'points_shortfall_color' => array( __( 'Points balance (shortfall)', 'strive-solutions-wizard' ), '#B36B00', '--ssw-points-shortfall' ),
+			'primary_color'          => array( __( 'Primary', 'strivre-solutions-wizard' ), '#002144', '--ssw-primary' ),
+			'secondary_color'        => array( __( 'Secondary / Accent', 'strivre-solutions-wizard' ), '#801414', '--ssw-secondary' ),
+			'text_color'             => array( __( 'Text', 'strivre-solutions-wizard' ), '#1E2933', '--ssw-text' ),
+			'background_color'       => array( __( 'Background', 'strivre-solutions-wizard' ), '#F4F6F8', '--ssw-bg' ),
+			'surface_color'          => array( __( 'Card surface', 'strivre-solutions-wizard' ), '#FFFFFF', '--ssw-surface' ),
+			'border_color'           => array( __( 'Border', 'strivre-solutions-wizard' ), '#64748B', '--ssw-border' ),
+			'selected_tint_color'    => array( __( 'Selected card tint', 'strivre-solutions-wizard' ), '#F6EAEA', '--ssw-selected-tint' ),
+			'points_ok_color'        => array( __( 'Points balance (OK)', 'strivre-solutions-wizard' ), '#17845A', '--ssw-points-ok' ),
+			'points_shortfall_color' => array( __( 'Points balance (shortfall)', 'strivre-solutions-wizard' ), '#B36B00', '--ssw-points-shortfall' ),
 		);
 
 		foreach ( $colors as $key => list( $label, $default, $var ) ) {
@@ -409,7 +409,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_typography',
 			array(
-				'label' => __( 'Typography', 'strive-solutions-wizard' ),
+				'label' => __( 'Typography', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
@@ -418,7 +418,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			Group_Control_Typography::get_type(),
 			array(
 				'name'     => 'heading_typography',
-				'label'    => __( 'Headings', 'strive-solutions-wizard' ),
+				'label'    => __( 'Headings', 'strivre-solutions-wizard' ),
 				'selector' => '{{WRAPPER}} .ssw-wizard .ssw-heading',
 				'fields_options' => array(
 					'font_family' => array( 'default' => 'Poppins' ),
@@ -431,7 +431,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			Group_Control_Typography::get_type(),
 			array(
 				'name'     => 'body_typography',
-				'label'    => __( 'Body', 'strive-solutions-wizard' ),
+				'label'    => __( 'Body', 'strivre-solutions-wizard' ),
 				'selector' => '{{WRAPPER}} .ssw-wizard',
 				'fields_options' => array(
 					'font_family' => array( 'default' => 'Inter' ),
@@ -444,7 +444,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			Group_Control_Typography::get_type(),
 			array(
 				'name'     => 'button_typography',
-				'label'    => __( 'Buttons', 'strive-solutions-wizard' ),
+				'label'    => __( 'Buttons', 'strivre-solutions-wizard' ),
 				'selector' => '{{WRAPPER}} .ssw-wizard .ssw-btn',
 				'fields_options' => array(
 					'font_family' => array( 'default' => 'Poppins' ),
@@ -460,7 +460,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_shape',
 			array(
-				'label' => __( 'Shape', 'strive-solutions-wizard' ),
+				'label' => __( 'Shape', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
@@ -468,7 +468,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'card_border_radius',
 			array(
-				'label'      => __( 'Card corner radius', 'strive-solutions-wizard' ),
+				'label'      => __( 'Card corner radius', 'strivre-solutions-wizard' ),
 				'type'       => Controls_Manager::SLIDER,
 				'range'      => array( 'px' => array( 'min' => 0, 'max' => 40 ) ),
 				'default'    => array( 'size' => 14 ),
@@ -481,7 +481,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'button_border_radius',
 			array(
-				'label'      => __( 'Button corner radius', 'strive-solutions-wizard' ),
+				'label'      => __( 'Button corner radius', 'strivre-solutions-wizard' ),
 				'type'       => Controls_Manager::SLIDER,
 				'range'      => array( 'px' => array( 'min' => 0, 'max' => 999 ) ),
 				'default'    => array( 'size' => 999 ),
@@ -535,8 +535,8 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		}
 
 		$config = array(
-			'restUrl'        => esc_url_raw( rest_url( 'strive-solutions/v1' ) ),
-			'nonce'           => wp_create_nonce( 'ssw_wizard' ),
+			'restUrl'        => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
+			'nonce'           => wp_create_nonce( 'wp_rest' ),
 			'enableTierStep'  => 'yes' === $settings['enable_tier_step'],
 			'enableDomainStep' => 'yes' === $settings['enable_domain_step'],
 			'preselectParam'  => $settings['preselect_param'] ?: 'solution',
@@ -550,11 +550,11 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'company' => 'yes' === $settings['field_company_required'],
 			),
 			'successMessage'  => $settings['success_message'],
-			'pageUrl'         => esc_url_raw( home_url( add_query_arg( array(), $_SERVER['REQUEST_URI'] ?? '' ) ) ),
+			'pageUrl'         => esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? wp_parse_url( home_url(), PHP_URL_HOST ) ) . ( $_SERVER['REQUEST_URI'] ?? '' ) ),
 		);
 		?>
 		<div class="ssw-wizard" data-widget-id="<?php echo esc_attr( $this->get_id() ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
-			<noscript><?php esc_html_e( 'Please enable JavaScript to use this form.', 'strive-solutions-wizard' ); ?></noscript>
+			<noscript><?php esc_html_e( 'Please enable JavaScript to use this form.', 'strivre-solutions-wizard' ); ?></noscript>
 		</div>
 		<?php
 	}

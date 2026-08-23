@@ -4,15 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * POST /wp-json/strive-solutions/v1/submit
+ * POST /wp-json/strivre-solutions/v1/submit
  *
- * Saves a `strive_request` post and fires the admin + customer emails.
+ * Saves a `strivre_request` post and fires the admin + customer emails.
  * Anonymous-accessible by design (no user accounts in this flow) — guarded
  * by a same-origin nonce plus an optional honeypot / minimum-time spam check.
  */
 class SSW_REST_Submit {
 
-	const NAMESPACE_ = 'strive-solutions/v1';
+	const NAMESPACE_ = 'strivre-solutions/v1';
 
 	private static $instance = null;
 
@@ -40,9 +40,9 @@ class SSW_REST_Submit {
 	}
 
 	public function check_nonce( \WP_REST_Request $request ) {
-		$nonce = $request->get_header( 'X-SSW-Nonce' );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'ssw_wizard' ) ) {
-			return new WP_Error( 'ssw_bad_nonce', __( 'Invalid request.', 'strive-solutions-wizard' ), array( 'status' => 403 ) );
+		$nonce = $request->get_header( 'X-WP-Nonce' );
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return new WP_Error( 'ssw_bad_nonce', __( 'Invalid request.', 'strivre-solutions-wizard' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -50,7 +50,7 @@ class SSW_REST_Submit {
 	public function handle( \WP_REST_Request $request ) {
 		$body = $request->get_json_params();
 		if ( ! is_array( $body ) ) {
-			return new WP_Error( 'ssw_bad_body', __( 'Malformed request.', 'strive-solutions-wizard' ), array( 'status' => 400 ) );
+			return new WP_Error( 'ssw_bad_body', __( 'Malformed request.', 'strivre-solutions-wizard' ), array( 'status' => 400 ) );
 		}
 
 		// Honeypot / min-time spam guard — respond as if it worked so bots don't learn anything.
@@ -68,7 +68,7 @@ class SSW_REST_Submit {
 		$email = sanitize_email( $body['email'] ?? '' );
 
 		if ( '' === $name || ! is_email( $email ) ) {
-			return new WP_Error( 'ssw_invalid_fields', __( 'Please provide at least your name and a valid email.', 'strive-solutions-wizard' ), array( 'status' => 400 ) );
+			return new WP_Error( 'ssw_invalid_fields', __( 'Please provide at least your name and a valid email.', 'strivre-solutions-wizard' ), array( 'status' => 400 ) );
 		}
 
 		$phone   = sanitize_text_field( $body['phone'] ?? '' );
@@ -105,7 +105,7 @@ class SSW_REST_Submit {
 		);
 
 		if ( is_wp_error( $post_id ) ) {
-			return new WP_Error( 'ssw_save_failed', __( 'Something went wrong saving your submission. Please try again.', 'strive-solutions-wizard' ), array( 'status' => 500 ) );
+			return new WP_Error( 'ssw_save_failed', __( 'Something went wrong saving your submission. Please try again.', 'strivre-solutions-wizard' ), array( 'status' => 500 ) );
 		}
 
 		update_post_meta( $post_id, '_customer_name', $name );
