@@ -80,7 +80,7 @@
 	font-weight: 600;
 	transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
 }
-.ssw-btn:hover:not([disabled]) { background: #001834; border-color: #001834; }
+.ssw-btn:hover:not([disabled]):not(.ghost) { background: transparent; color: var(--ssw-primary); border-color: var(--ssw-primary); }
 .ssw-btn:active:not([disabled]) { transform: translateY(1px); }
 .ssw-btn[disabled] { opacity: .5; cursor: not-allowed; }
 .ssw-btn.ghost { background: transparent; color: var(--ssw-primary); }
