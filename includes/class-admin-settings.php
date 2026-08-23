@@ -161,7 +161,7 @@ class SSW_Admin_Settings {
 				<h2 class="title"><?php esc_html_e( 'Spam guard', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><?php esc_html_e( 'Honeypot + minimum time-on-form', 'strivre-solutions-wizard' ); ?></th>
+						<th><?php esc_html_e( 'Honeypot (Spam Guard) + minimum time-on-form', 'strivre-solutions-wizard' ); ?></th>
 						<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[spam_guard_enabled]" value="1" <?php checked( $s['spam_guard_enabled'], 1 ); ?> /> <?php esc_html_e( 'Enabled', 'strivre-solutions-wizard' ); ?></label></td>
 					</tr>
 				</table>
