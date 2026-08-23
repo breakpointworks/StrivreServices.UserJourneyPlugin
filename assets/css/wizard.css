@@ -72,15 +72,17 @@
 .ssw-solution-card h4 { font-size: 16px; }
 .ssw-solution-card p { color: var(--ssw-border); opacity: 1; font-size: 13.5px; line-height: 1.55; }
 .ssw-solution-card::after {
-	content: ''; position: absolute; top: 18px; right: 18px; width: 22px; height: 22px;
-	border-radius: 50%; border: 2px solid #E4E7EC; background: #fff;
+	content: ''; position: absolute; top: -9px; right: -9px; width: 22px; height: 22px; z-index: 1;
+	border-radius: 50%; border: 2px solid #E4E7EC; background-color: #fff;
+	box-shadow: 0 2px 6px rgba(16,24,40,0.12);
 	background-repeat: no-repeat; background-position: center; background-size: 12px;
-	transition: background-color .15s ease, border-color .15s ease;
+	transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }
 .ssw-solution-card.selected::after {
 	background-color: var(--ssw-secondary); border-color: var(--ssw-secondary);
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6L9 17l-5-5' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 	background-repeat: no-repeat; background-position: center; background-size: 12px;
+	transform: scale(1.08);
 }
 
 /* Package tier cards — mirrors the live site's package picker */
