@@ -17,6 +17,19 @@
 		return node;
 	}
 
+	var STAR_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2l2.9 6.9L22 9.6l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.6L2 9.6l7.1-.7L12 2z"/></svg>';
+
+	function tierBadge( tier, size ) {
+		var svg = size <= 20
+			? STAR_SVG
+			: STAR_SVG.replace( 'width="14" height="14"', 'width="22" height="22"' );
+		return el( 'div', {
+			class: 'ssw-tier-badge' + ( size <= 20 ? ' ssw-tier-badge-sm' : '' ),
+			style: 'background:' + ( ( tier && tier.badgeColor ) || '#002144' ) + ';',
+			html: svg,
+		} );
+	}
+
 	function SSWWizard( root ) {
 		this.root = root;
 		this.config = JSON.parse( root.getAttribute( 'data-config' ) || '{}' );
@@ -223,13 +236,11 @@
 		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Choose your package' ] ) );
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
-		var starSvg = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 2l2.9 6.9L22 9.6l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.6L2 9.6l7.1-.7L12 2z"/></svg>';
-
 		this.config.tiers.forEach( function ( tier ) {
 			var selected = this.state.tier && this.state.tier.title === tier.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
 			var header = el( 'div', { class: 'ssw-tier-header' } );
-			header.appendChild( el( 'div', { class: 'ssw-tier-badge', style: 'background:' + ( tier.badgeColor || '#002144' ) + ';', html: starSvg } ) );
+			header.appendChild( tierBadge( tier, 56 ) );
 			header.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ tier.points + ' pts included' ] ) );
 			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ tier.title ] ) );
@@ -593,42 +604,74 @@
 		var box = el( 'div', { class: 'ssw-checkout-summary' } );
 		box.appendChild( el( 'h4', {}, [ 'Your Order' ] ) );
 
-		var table = el( 'table', { class: 'ssw-order-table' } );
-		var thead = el( 'thead' );
-		thead.appendChild( el( 'tr', {}, [ el( 'th', {}, [ 'Item' ] ), el( 'th', {}, [ 'Points' ] ) ] ) );
-		table.appendChild( thead );
+		var list = el( 'div', { class: 'ssw-order-list' } );
+		var rowCount = 0;
 
-		var tbody = el( 'tbody' );
-		var rows = 0;
+		function row( mainNodes, pointsText ) {
+			var main = el( 'div', { class: 'ssw-order-row-main' }, mainNodes );
+			return el( 'div', { class: 'ssw-order-row' }, [ main, el( 'div', { class: 'ssw-order-row-points' }, [ pointsText ] ) ] );
+		}
+
 		if ( this.state.template ) {
-			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Website Template: ' + this.state.template.title ] ), el( 'td', {}, [ '—' ] ) ] ) );
-			rows++;
+			var tmpl = this.state.template;
+			var mainNodes = [];
+			if ( tmpl.image ) {
+				var thumb = el( 'img', { class: 'ssw-order-thumb', src: tmpl.image, alt: tmpl.title } );
+				thumb.addEventListener( 'click', function () {
+					this.openLightbox( tmpl.gallery && tmpl.gallery.length ? tmpl.gallery : [ tmpl.image ] );
+				}.bind( this ) );
+				mainNodes.push( thumb );
+			}
+			mainNodes.push( el( 'span', {}, [ 'Website Template: ' + tmpl.title ] ) );
+			list.appendChild( row( mainNodes, '—' ) );
+			rowCount++;
 		}
-		if ( this.state.tier ) {
-			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Package: ' + this.state.tier.title ] ), el( 'td', {}, [ String( this.pointsIncluded() ) ] ) ] ) );
-			rows++;
-		}
-		if ( this.state.domain ) {
-			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Domain: ' + this.state.domain ] ), el( 'td', {}, [ '—' ] ) ] ) );
-			rows++;
-		}
-		this.selectedSolutions().forEach( function ( s ) {
-			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ s.title ] ), el( 'td', {}, [ String( s.points ) ] ) ] ) );
-			rows++;
-		} );
-		if ( ! rows ) {
-			tbody.appendChild( el( 'tr', {}, [ el( 'td', { colspan: '2' }, [ 'Nothing selected yet.' ] ) ] ) );
-		}
-		table.appendChild( tbody );
 
-		var tfoot = el( 'tfoot' );
+		if ( this.state.tier ) {
+			list.appendChild( row( [ tierBadge( this.state.tier, 20 ), el( 'span', {}, [ 'Package: ' + this.state.tier.title ] ) ], String( this.pointsIncluded() ) ) );
+			rowCount++;
+		}
+
+		if ( this.state.domain ) {
+			list.appendChild( row( [ el( 'span', {}, [ 'Domain: ' + this.state.domain ] ) ], '—' ) );
+			rowCount++;
+		}
+
+		this.selectedSolutions().forEach( function ( s ) {
+			var mainNodes = [];
+			if ( s.icon ) mainNodes.push( el( 'img', { class: 'ssw-order-icon', src: s.icon, alt: '' } ) );
+			mainNodes.push( el( 'span', {}, [ s.title ] ) );
+			list.appendChild( row( mainNodes, String( s.points ) ) );
+			rowCount++;
+		}.bind( this ) );
+
+		if ( ! rowCount ) {
+			list.appendChild( row( [ el( 'span', {}, [ 'Nothing selected yet.' ] ) ], '' ) );
+		}
+		box.appendChild( list );
+
 		var used = this.pointsUsed();
 		var included = this.pointsIncluded();
-		var totalLabel = this.state.tier ? ( used + ' / ' + included + ' pts' ) : ( used + ' pts' );
-		tfoot.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Total' ] ), el( 'td', {}, [ totalLabel ] ) ] ) );
-		table.appendChild( tfoot );
 
-		box.appendChild( table );
+		if ( this.state.tier ) {
+			var breakdown = el( 'div', { class: 'ssw-order-breakdown' } );
+			breakdown.appendChild( row( [ el( 'span', {}, [ 'Points used' ] ) ], String( used ) ) );
+			breakdown.appendChild( row( [ el( 'span', {}, [ this.state.tier.title + ' allowance' ] ) ], '−' + included ) );
+			box.appendChild( breakdown );
+		}
+
+		var diff = used - included;
+		var totalLabel = ! this.state.tier
+			? used + ' pts'
+			: diff > 0
+				? diff + ' pts over budget'
+				: ( -diff ) + ' pts remaining';
+		var total = el( 'div', { class: 'ssw-order-total' + ( diff > 0 ? ' over' : '' ) }, [
+			el( 'span', {}, [ 'Total' ] ),
+			el( 'span', {}, [ totalLabel ] ),
+		] );
+		box.appendChild( total );
+
 		return box;
 	};
 
