@@ -318,6 +318,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		);
 		foreach ( $items as &$item ) {
 			$item['sol_enabled'] = 'yes';
+			$item['sol_icon']    = array( 'url' => SSW_PLUGIN_URL . 'assets/img/icons/' . $item['sol_slug'] . '.svg' );
 		}
 		return $items;
 	}
