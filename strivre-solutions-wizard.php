@@ -3,7 +3,7 @@
  * Plugin Name: Strivre Solutions Wizard
  * Description: Elementor widget for Strivre Services' Solutions page — a multi-step configurator (package tier, website template, domain search, solutions/points selection, checkout) that emails staff and the customer on submission.
  * Version: 0.1.0
- * Author: Paul John Labesores, Strivre Services
+ * Author: Paul John Labesores | Strivre Services
  * Text Domain: strivre-solutions-wizard
  * Requires PHP: 7.4
  */
