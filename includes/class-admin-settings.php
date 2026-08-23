@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Global, site-wide settings: notification email(s), Domainr API credentials,
+ * Global, site-wide settings: notification email(s), domain lookup API credentials,
  * and the two email templates. Everything else (catalog, pricing/points,
  * templates) is intentionally per-widget-instance, not here — see the
  * Elementor widget's Content controls.
@@ -33,7 +33,7 @@ class SSW_Admin_Settings {
 			'from_name'              => get_bloginfo( 'name' ),
 			'from_email'             => get_option( 'admin_email' ),
 			'domainr_api_key'        => '',
-			'domainr_api_host'       => 'domainr.p.rapidapi.com',
+			'domainr_api_host'       => 'domains-api.p.rapidapi.com',
 			'spam_guard_enabled'     => 1,
 			'admin_email_subject'    => 'New Solutions Wizard submission — {company}',
 			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
@@ -105,7 +105,7 @@ class SSW_Admin_Settings {
 					</tr>
 				</table>
 
-				<h2 class="title"><?php esc_html_e( 'Domain search (Domainr / RapidAPI)', 'strivre-solutions-wizard' ); ?></h2>
+				<h2 class="title"><?php esc_html_e( 'Domain search (Domains API / RapidAPI)', 'strivre-solutions-wizard' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
 						<th><label for="ssw_domainr_api_key"><?php esc_html_e( 'RapidAPI key', 'strivre-solutions-wizard' ); ?></label></th>

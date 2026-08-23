@@ -19,7 +19,7 @@ define( 'SSW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once SSW_PLUGIN_DIR . 'includes/class-cpt.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-admin-settings.php';
-require_once SSW_PLUGIN_DIR . 'includes/class-domainr-client.php';
+require_once SSW_PLUGIN_DIR . 'includes/class-domain-lookup-client.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-mailer.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-rest-domain-search.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-rest-submit.php';

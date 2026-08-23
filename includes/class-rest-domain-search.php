@@ -62,7 +62,7 @@ class SSW_REST_Domain_Search {
 		}
 		set_transient( $throttle_key, 1, self::THROTTLE_SECONDS );
 
-		$client = new SSW_Domainr_Client();
+		$client = new SSW_Domain_Lookup_Client();
 		$result = $client->check( $request->get_param( 'q' ) );
 
 		if ( is_wp_error( $result ) ) {
