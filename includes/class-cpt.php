@@ -52,11 +52,13 @@ class SSW_CPT {
 			self::POST_TYPE,
 			array(
 				'labels'       => array(
-					'name'          => __( 'Strivre Requests', 'strivre-solutions-wizard' ),
-					'singular_name' => __( 'Strivre Request', 'strivre-solutions-wizard' ),
-					'all_items'     => __( 'Submissions', 'strivre-solutions-wizard' ),
-					'edit_item'     => __( 'Submission Details', 'strivre-solutions-wizard' ),
-					'search_items'  => __( 'Search Submissions', 'strivre-solutions-wizard' ),
+					'name'                  => __( 'Strivre Requests', 'strivre-solutions-wizard' ),
+					'singular_name'         => __( 'Strivre Request', 'strivre-solutions-wizard' ),
+					'all_items'             => __( 'Submissions', 'strivre-solutions-wizard' ),
+					'edit_item'             => __( 'Submission Details', 'strivre-solutions-wizard' ),
+					'search_items'          => __( 'Search Submissions', 'strivre-solutions-wizard' ),
+					'not_found'             => __( 'No requests found.', 'strivre-solutions-wizard' ),
+					'not_found_in_trash'    => __( 'No requests found in Trash.', 'strivre-solutions-wizard' ),
 				),
 				'public'       => false,
 				'show_ui'      => true,
@@ -67,6 +69,16 @@ class SSW_CPT {
 				'has_archive'  => false,
 				'rewrite'      => false,
 				'capability_type' => 'post',
+				// Submissions only ever get created by the wizard's own REST
+				// handler (wp_insert_post() called directly, no capability
+				// gate) — there's no "Add New" UI worth having since only the
+				// title field is editable there, everything else is read-only
+				// wizard data. Disabling create_posts hides the Add New
+				// submenu/button entirely without touching edit/delete/list.
+				'capabilities' => array(
+					'create_posts' => 'do_not_allow',
+				),
+				'map_meta_cap' => true,
 			)
 		);
 	}
