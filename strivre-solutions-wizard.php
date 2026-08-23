@@ -13,6 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'SSW_VERSION', '0.1.3' );
+// Highest Elementor version this plugin has actually been tested against.
+// Only the major.minor part is compared — an Elementor patch release
+// (4.2.3 -> 4.2.4) is assumed compatible, a minor/major bump (4.2.x -> 4.3.0)
+// is not, and shows the compatibility notice on the Plugins screen.
+define( 'SSW_TESTED_ELEMENTOR_VERSION', '4.2.3' );
 define( 'SSW_PLUGIN_FILE', __FILE__ );
 define( 'SSW_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SSW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -67,6 +72,7 @@ final class Strivre_Solutions_Wizard {
 			add_action( 'elementor/widgets/register', array( $this, 'register_widget' ) );
 			add_action( 'elementor/elements/categories_registered', array( $this, 'register_category' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ), 5 );
+			add_action( 'after_plugin_row_' . plugin_basename( SSW_PLUGIN_FILE ), array( $this, 'elementor_compat_notice_row' ) );
 		} else {
 			add_action( 'admin_notices', array( $this, 'elementor_missing_notice' ) );
 		}
@@ -109,6 +115,53 @@ final class Strivre_Solutions_Wizard {
 		echo '<div class="notice notice-warning"><p>';
 		esc_html_e( 'Strivre Solutions Wizard requires Elementor to be installed and active. The plugin is otherwise idle.', 'strivre-solutions-wizard' );
 		echo '</p></div>';
+	}
+
+	/**
+	 * Only the major.minor part is compared — a patch release is assumed
+	 * compatible, a minor/major bump is not. See SSW_TESTED_ELEMENTOR_VERSION.
+	 */
+	private function elementor_version_compatible( $version ) {
+		$tested  = explode( '.', SSW_TESTED_ELEMENTOR_VERSION );
+		$current = explode( '.', $version );
+		return ( $tested[0] ?? '' ) === ( $current[0] ?? '' ) && ( $tested[1] ?? '' ) === ( $current[1] ?? '' );
+	}
+
+	/**
+	 * Renders a row under this plugin's entry on the Plugins screen, styled
+	 * like WordPress's own inline "update available" notice, when the active
+	 * Elementor version hasn't been tested against this plugin. Hooked to
+	 * after_plugin_row_{this plugin}, which only fires there.
+	 */
+	public function elementor_compat_notice_row() {
+		if ( ! defined( 'ELEMENTOR_VERSION' ) || $this->elementor_version_compatible( ELEMENTOR_VERSION ) ) {
+			return;
+		}
+
+		$wp_list_table = function_exists( '_get_list_table' ) ? _get_list_table( 'WP_Plugins_List_Table' ) : null;
+		$colspan       = $wp_list_table ? $wp_list_table->get_column_count() : 3;
+		$plugin_file   = plugin_basename( SSW_PLUGIN_FILE );
+		$active_class  = is_plugin_active( $plugin_file ) ? ' active' : '';
+
+		$message = sprintf(
+			/* translators: 1: tested Elementor version, 2: currently active Elementor version, 3: contact link */
+			esc_html__( 'Strivre Solutions Wizard has only been tested with Elementor up to version %1$s. You\'re running Elementor %2$s — compatibility is unknown. Please contact %3$s for an update.', 'strivre-solutions-wizard' ),
+			esc_html( SSW_TESTED_ELEMENTOR_VERSION ),
+			esc_html( ELEMENTOR_VERSION ),
+			'<a href="mailto:labesores.pauljohn@gmail.com">Paul John Labesores</a>'
+		);
+
+		printf(
+			'<tr class="plugin-update-tr%1$s" id="strivre-solutions-wizard-elementor-compat" data-slug="strivre-solutions-wizard" data-plugin="%2$s">
+				<td colspan="%3$d" class="plugin-update colspanchange">
+					<div class="update-message notice inline notice-warning notice-alt"><p>%4$s</p></div>
+				</td>
+			</tr>',
+			esc_attr( $active_class ),
+			esc_attr( $plugin_file ),
+			esc_attr( $colspan ),
+			$message
+		);
 	}
 }
 
