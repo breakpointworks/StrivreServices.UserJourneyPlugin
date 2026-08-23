@@ -36,7 +36,7 @@ class SSW_Admin_Settings {
 			'domainr_api_host'       => 'domains-api.p.rapidapi.com',
 			'spam_guard_enabled'     => 1,
 			'admin_email_subject'    => 'New Solutions Wizard submission — {company}',
-			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
+			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nAddress:\n{address}\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
 			'customer_email_subject' => 'Thanks, {name} — we\'ve got your request',
 			'customer_email_body'    => "Hi {name},\n\nThanks for putting together your Strivre Services request! Our team will review it and send you a business proposal within 24 hours.\n\nHere's a summary of what you selected:\n\nPackage tier: {tier}\nDomain: {domain}\nSolutions: {solutions}\n\nTalk soon,\nStrivre Services",
 		);
@@ -127,7 +127,7 @@ class SSW_Admin_Settings {
 				</table>
 
 				<h2 class="title"><?php esc_html_e( 'Admin notification email', 'strivre-solutions-wizard' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url}', 'strivre-solutions-wizard' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {address} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url}', 'strivre-solutions-wizard' ); ?></p>
 				<table class="form-table" role="presentation">
 					<tr>
 						<th><label for="ssw_admin_email_subject"><?php esc_html_e( 'Subject', 'strivre-solutions-wizard' ); ?></label></th>

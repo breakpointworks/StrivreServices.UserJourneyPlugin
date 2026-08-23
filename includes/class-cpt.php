@@ -272,11 +272,19 @@ class SSW_CPT {
 	}
 
 	public function render_meta_box( $post ) {
+		$address_parts = array_filter( array(
+			get_post_meta( $post->ID, '_address_line1', true ),
+			get_post_meta( $post->ID, '_address_line2', true ),
+			trim( get_post_meta( $post->ID, '_address_city', true ) . ( get_post_meta( $post->ID, '_address_state', true ) ? ', ' . get_post_meta( $post->ID, '_address_state', true ) : '' ) . ' ' . get_post_meta( $post->ID, '_address_zip', true ) ),
+			get_post_meta( $post->ID, '_address_country', true ),
+		) );
+
 		$fields = array(
 			__( 'Name', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_name', true ),
 			__( 'Email', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_email', true ),
 			__( 'Phone', 'strivre-solutions-wizard' )              => get_post_meta( $post->ID, '_customer_phone', true ),
 			__( 'Company', 'strivre-solutions-wizard' )            => get_post_meta( $post->ID, '_company_name', true ),
+			__( 'Address', 'strivre-solutions-wizard' )            => $address_parts ? implode( ', ', $address_parts ) : '',
 			__( 'Package Tier', 'strivre-solutions-wizard' )       => get_post_meta( $post->ID, '_tier_chosen', true ),
 			__( 'Website Template', 'strivre-solutions-wizard' )   => get_post_meta( $post->ID, '_template_chosen', true ),
 			__( 'Domain', 'strivre-solutions-wizard' )             => get_post_meta( $post->ID, '_domain_chosen', true ),
@@ -446,6 +454,12 @@ class SSW_CPT {
 				'email'             => get_post_meta( $id, '_customer_email', true ),
 				'phone'             => get_post_meta( $id, '_customer_phone', true ),
 				'company'           => get_post_meta( $id, '_company_name', true ),
+				'address_country'   => get_post_meta( $id, '_address_country', true ),
+				'address_line1'     => get_post_meta( $id, '_address_line1', true ),
+				'address_line2'     => get_post_meta( $id, '_address_line2', true ),
+				'address_city'      => get_post_meta( $id, '_address_city', true ),
+				'address_state'     => get_post_meta( $id, '_address_state', true ),
+				'address_zip'       => get_post_meta( $id, '_address_zip', true ),
 				'tier'              => get_post_meta( $id, '_tier_chosen', true ),
 				'template'          => get_post_meta( $id, '_template_chosen', true ),
 				'domain'            => get_post_meta( $id, '_domain_chosen', true ),

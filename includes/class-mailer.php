@@ -36,11 +36,20 @@ class SSW_Mailer {
 			$solutions_lines[] = sprintf( '- %s (%s pts)', $item['title'] ?? '', $item['points'] ?? 0 );
 		}
 
+		$addr       = $data['address'] ?? array();
+		$addr_lines = array_filter( array(
+			$addr['line1'] ?? '',
+			$addr['line2'] ?? '',
+			trim( ( $addr['city'] ?? '' ) . ( ! empty( $addr['state'] ) ? ', ' . $addr['state'] : '' ) . ' ' . ( $addr['zip'] ?? '' ) ),
+			$addr['country'] ?? '',
+		) );
+
 		return array(
 			'{name}'              => $data['name'] ?? '',
 			'{email}'             => $data['email'] ?? '',
 			'{phone}'             => $data['phone'] ?? '',
 			'{company}'           => $data['company'] ?? '',
+			'{address}'           => $addr_lines ? implode( "\n", $addr_lines ) : __( 'not provided', 'strivre-solutions-wizard' ),
 			'{tier}'              => $data['tier'] ?? '',
 			'{points_included}'   => (string) ( $data['points_included'] ?? 0 ),
 			'{template}'          => $data['template'] ?? '',

@@ -24,6 +24,7 @@
 		this.startedAt = Date.now();
 
 		this.state = {
+			template: null,
 			tier: null,
 			domain: '',
 			selectedSlugs: [],
@@ -32,11 +33,16 @@
 
 		this.steps = [];
 		if ( this.config.enableTierStep ) this.steps.push( 'tier' );
+		if ( this.config.enableTemplateStep ) this.steps.push( 'template' );
 		if ( this.config.enableDomainStep ) this.steps.push( 'domain' );
 		this.steps.push( 'solutions' );
 		this.steps.push( 'checkout' );
 
 		this.restore();
+		// A restored session may predate a config change (steps added/removed
+		// since the visitor started), so the saved step index could point
+		// past the current step list — clamp it back into range.
+		this.state.step = Math.max( 0, Math.min( this.state.step || 0, this.steps.length - 1 ) );
 		this.applyPreselect();
 		this.render();
 	}
@@ -99,6 +105,7 @@
 
 	SSWWizard.prototype.canAdvance = function () {
 		var step = this.currentStepName();
+		if ( 'template' === step ) return !! this.state.template;
 		if ( 'tier' === step ) return !! this.state.tier;
 		if ( 'domain' === step ) return !! this.state.domainSkipped || !! this.state.domain;
 		return true;
@@ -112,7 +119,8 @@
 
 		var step = this.currentStepName();
 		var panel;
-		if ( 'tier' === step ) panel = this.renderTierPanel();
+		if ( 'template' === step ) panel = this.renderTemplatePanel();
+		else if ( 'tier' === step ) panel = this.renderTierPanel();
 		else if ( 'domain' === step ) panel = this.renderDomainPanel();
 		else if ( 'solutions' === step ) panel = this.renderSolutionsPanel();
 		else panel = this.renderCheckoutPanel();
@@ -124,6 +132,7 @@
 	SSWWizard.prototype.renderStepIndicator = function () {
 		var wrap = el( 'div', { class: 'ssw-steps' } );
 		var labels = {
+			template: 'Template',
 			tier: 'Package',
 			domain: 'Domain',
 			solutions: 'Solutions',
@@ -174,6 +183,39 @@
 		return nav;
 	};
 
+	/* ------------------------------------------------------------ template step */
+
+	SSWWizard.prototype.renderTemplatePanel = function () {
+		var wrap = el( 'div', { class: 'ssw-panel active' } );
+		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Pick a website template' ] ) );
+		wrap.appendChild( el( 'p', {}, [ 'Click a mockup to preview it, then select the one you want.' ] ) );
+		var grid = el( 'div', { class: 'ssw-grid' } );
+
+		this.config.templates.forEach( function ( tmpl ) {
+			var selected = this.state.template && this.state.template.title === tmpl.title;
+			var card = el( 'div', { class: 'ssw-card' + ( selected ? ' selected' : '' ) } );
+			if ( tmpl.image ) {
+				var img = el( 'img', { src: tmpl.image, alt: tmpl.title } );
+				img.addEventListener( 'click', function ( e ) {
+					e.stopPropagation();
+					this.openLightbox( tmpl.gallery && tmpl.gallery.length ? tmpl.gallery : [ tmpl.image ] );
+				}.bind( this ) );
+				card.appendChild( img );
+			}
+			card.appendChild( el( 'h4', {}, [ tmpl.title ] ) );
+			card.addEventListener( 'click', function () {
+				this.state.template = tmpl;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+
+		wrap.appendChild( grid );
+		wrap.appendChild( this.renderNav() );
+		return wrap;
+	};
+
 	/* ------------------------------------------------------------ tier step */
 
 	SSWWizard.prototype.renderTierPanel = function () {
@@ -181,18 +223,15 @@
 		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Choose your package' ] ) );
 		var grid = el( 'div', { class: 'ssw-grid' } );
 
+		var starSvg = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M12 2l2.9 6.9L22 9.6l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.6L2 9.6l7.1-.7L12 2z"/></svg>';
+
 		this.config.tiers.forEach( function ( tier ) {
 			var selected = this.state.tier && this.state.tier.title === tier.title;
-			var card = el( 'div', { class: 'ssw-card' + ( selected ? ' selected' : '' ) } );
-			if ( tier.image ) {
-				var img = el( 'img', { src: tier.image, alt: tier.title } );
-				img.addEventListener( 'click', function ( e ) {
-					e.stopPropagation();
-					this.openLightbox( tier.gallery && tier.gallery.length ? tier.gallery : [ tier.image ] );
-				}.bind( this ) );
-				card.appendChild( img );
-			}
-			card.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ tier.points + ' points included' ] ) );
+			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			var header = el( 'div', { class: 'ssw-tier-header' } );
+			header.appendChild( el( 'div', { class: 'ssw-tier-badge', style: 'background:' + ( tier.badgeColor || '#002144' ) + ';', html: starSvg } ) );
+			header.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ tier.points + ' pts included' ] ) );
+			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ tier.title ] ) );
 			if ( tier.tagline ) card.appendChild( el( 'p', { style: 'font-weight:600;' }, [ tier.tagline ] ) );
 			if ( tier.description ) card.appendChild( el( 'p', {}, [ tier.description ] ) );
@@ -349,25 +388,112 @@
 
 	SSWWizard.prototype.renderCheckoutPanel = function () {
 		var wrap = el( 'div', { class: 'ssw-panel active' } );
-		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Your details' ] ) );
-
-		wrap.appendChild( this.renderSummary() );
+		var layout = el( 'div', { class: 'ssw-checkout-layout' } );
+		var formCol = el( 'div', { class: 'ssw-checkout-form' } );
+		formCol.appendChild( el( 'h3', { class: 'ssw-heading' }, [ 'Your Details' ] ) );
 
 		var form = el( 'form', { novalidate: 'novalidate' } );
 		var fields = this.config.fields || {};
 		var inputs = {};
 
-		[ [ 'name', 'Name', 'text' ], [ 'email', 'Email', 'email' ], [ 'phone', 'Phone', 'tel' ], [ 'company', 'Company', 'text' ] ].forEach( function ( f ) {
-			var key = f[ 0 ], label = f[ 1 ], type = f[ 2 ];
-			var required = !! fields[ key ];
+		var nameRow = el( 'div', { class: 'ssw-field-row' } );
+		form.appendChild( nameRow );
+		[ [ 'firstName', 'First Name' ], [ 'lastName', 'Last Name' ] ].forEach( function ( f ) {
+			var required = !! fields.name;
 			var fieldWrap = el( 'div', { class: 'ssw-field' } );
-			fieldWrap.appendChild( el( 'label', {}, [ label + ( required ? ' *' : '' ) ] ) );
-			var input = el( 'input', { type: type, name: key } );
+			fieldWrap.appendChild( el( 'label', {}, [ f[ 1 ] + ( required ? ' *' : '' ) ] ) );
+			var input = el( 'input', { type: 'text', name: f[ 0 ] } );
+			if ( required ) input.setAttribute( 'required', 'required' );
+			fieldWrap.appendChild( input );
+			nameRow.appendChild( fieldWrap );
+			inputs[ f[ 0 ] ] = { el: input, requiredKey: 'name' };
+		} );
+
+		( function () {
+			var required = !! fields.company;
+			var fieldWrap = el( 'div', { class: 'ssw-field' } );
+			fieldWrap.appendChild( el( 'label', {}, [ 'Company' + ( required ? ' *' : ' (optional)' ) ] ) );
+			var input = el( 'input', { type: 'text', name: 'company' } );
 			if ( required ) input.setAttribute( 'required', 'required' );
 			fieldWrap.appendChild( input );
 			form.appendChild( fieldWrap );
-			inputs[ key ] = input;
-		} );
+			inputs.company = { el: input, requiredKey: 'company' };
+		} )();
+
+		if ( fields.address ) {
+			( function () {
+				var fieldWrap = el( 'div', { class: 'ssw-field' } );
+				fieldWrap.appendChild( el( 'label', {}, [ 'Country / Region *' ] ) );
+				var input = el( 'input', { type: 'text', name: 'country' } );
+				input.setAttribute( 'required', 'required' );
+				fieldWrap.appendChild( input );
+				form.appendChild( fieldWrap );
+				inputs.country = { el: input, requiredKey: 'address' };
+			} )();
+
+			( function () {
+				var fieldWrap = el( 'div', { class: 'ssw-field' } );
+				fieldWrap.appendChild( el( 'label', {}, [ 'Street Address *' ] ) );
+				var input = el( 'input', { type: 'text', name: 'address1', placeholder: 'House number and street name' } );
+				input.setAttribute( 'required', 'required' );
+				fieldWrap.appendChild( input );
+				form.appendChild( fieldWrap );
+				inputs.address1 = { el: input, requiredKey: 'address' };
+			} )();
+
+			( function () {
+				var fieldWrap = el( 'div', { class: 'ssw-field' } );
+				fieldWrap.appendChild( el( 'label', {}, [ 'Address Line 2 (optional)' ] ) );
+				var input = el( 'input', { type: 'text', name: 'address2', placeholder: 'Apartment, suite, unit, etc.' } );
+				fieldWrap.appendChild( input );
+				form.appendChild( fieldWrap );
+				inputs.address2 = { el: input, requiredKey: null };
+			} )();
+
+			var addrRow = el( 'div', { class: 'ssw-field-row' } );
+			form.appendChild( addrRow );
+			[ [ 'city', 'Town / City' ], [ 'state', 'State / County' ] ].forEach( function ( f ) {
+				var fieldWrap = el( 'div', { class: 'ssw-field' } );
+				fieldWrap.appendChild( el( 'label', {}, [ f[ 1 ] + ' *' ] ) );
+				var input = el( 'input', { type: 'text', name: f[ 0 ] } );
+				input.setAttribute( 'required', 'required' );
+				fieldWrap.appendChild( input );
+				addrRow.appendChild( fieldWrap );
+				inputs[ f[ 0 ] ] = { el: input, requiredKey: 'address' };
+			} );
+
+			( function () {
+				var fieldWrap = el( 'div', { class: 'ssw-field' } );
+				fieldWrap.appendChild( el( 'label', {}, [ 'Postcode / ZIP *' ] ) );
+				var input = el( 'input', { type: 'text', name: 'zip' } );
+				input.setAttribute( 'required', 'required' );
+				fieldWrap.appendChild( input );
+				form.appendChild( fieldWrap );
+				inputs.zip = { el: input, requiredKey: 'address' };
+			} )();
+		}
+
+		( function () {
+			var required = !! fields.phone;
+			var fieldWrap = el( 'div', { class: 'ssw-field' } );
+			fieldWrap.appendChild( el( 'label', {}, [ 'Phone' + ( required ? ' *' : ' (optional)' ) ] ) );
+			var input = el( 'input', { type: 'tel', name: 'phone' } );
+			if ( required ) input.setAttribute( 'required', 'required' );
+			fieldWrap.appendChild( input );
+			form.appendChild( fieldWrap );
+			inputs.phone = { el: input, requiredKey: 'phone' };
+		} )();
+
+		( function () {
+			var required = !! fields.email;
+			var fieldWrap = el( 'div', { class: 'ssw-field' } );
+			fieldWrap.appendChild( el( 'label', {}, [ 'Email' + ( required ? ' *' : ' (optional)' ) ] ) );
+			var input = el( 'input', { type: 'email', name: 'email' } );
+			if ( required ) input.setAttribute( 'required', 'required' );
+			fieldWrap.appendChild( input );
+			form.appendChild( fieldWrap );
+			inputs.email = { el: input, requiredKey: 'email' };
+		} )();
 
 		var hp = el( 'input', { class: 'ssw-hp', type: 'text', name: 'hp', tabindex: '-1', autocomplete: 'off' } );
 		form.appendChild( hp );
@@ -388,11 +514,12 @@
 			errorBox.textContent = '';
 			var valid = true;
 			Object.keys( inputs ).forEach( function ( key ) {
-				var input = inputs[ key ];
+				var input = inputs[ key ].el;
+				var requiredKey = inputs[ key ].requiredKey;
 				var fieldWrap = input.closest( '.ssw-field' );
 				fieldWrap.classList.remove( 'error' );
 				var value = input.value.trim();
-				if ( fields[ key ] && ! value ) {
+				if ( requiredKey && fields[ requiredKey ] && ! value ) {
 					valid = false;
 					fieldWrap.classList.add( 'error' );
 				}
@@ -409,14 +536,25 @@
 			submit.disabled = true;
 			submit.textContent = 'Submitting…';
 
+			var val = function ( key ) { return inputs[ key ] ? inputs[ key ].el.value.trim() : ''; };
+			var fullName = ( val( 'firstName' ) + ' ' + val( 'lastName' ) ).trim();
+
 			var payload = {
-				name: inputs.name.value.trim(),
-				email: inputs.email.value.trim(),
-				phone: inputs.phone.value.trim(),
-				company: inputs.company.value.trim(),
+				name: fullName,
+				first_name: val( 'firstName' ),
+				last_name: val( 'lastName' ),
+				email: val( 'email' ),
+				phone: val( 'phone' ),
+				company: val( 'company' ),
+				country: val( 'country' ),
+				address_1: val( 'address1' ),
+				address_2: val( 'address2' ),
+				city: val( 'city' ),
+				state: val( 'state' ),
+				zip: val( 'zip' ),
 				tier_title: this.state.tier ? this.state.tier.title : '',
 				tier_points: this.pointsIncluded(),
-				template_title: this.state.tier ? this.state.tier.title : '',
+				template_title: this.state.template ? this.state.template.title : '',
 				domain: this.state.domain || '',
 				solutions: this.selectedSolutions().map( function ( s ) { return { title: s.title, points: s.points }; } ),
 				page_url: this.config.pageUrl || window.location.href,
@@ -444,21 +582,53 @@
 				} );
 		}.bind( this ) );
 
-		wrap.appendChild( form );
+		formCol.appendChild( form );
+		layout.appendChild( formCol );
+		layout.appendChild( this.renderOrderSummary() );
+		wrap.appendChild( layout );
 		return wrap;
 	};
 
-	SSWWizard.prototype.renderSummary = function () {
-		var box = el( 'div', { class: 'ssw-summary' } );
-		box.appendChild( el( 'h4', {}, [ 'Your selection' ] ) );
-		var list = el( 'ul' );
-		if ( this.state.tier ) list.appendChild( el( 'li', {}, [ 'Package: ' + this.state.tier.title + ' (' + this.pointsIncluded() + ' pts)' ] ) );
-		if ( this.state.domain ) list.appendChild( el( 'li', {}, [ 'Domain: ' + this.state.domain ] ) );
+	SSWWizard.prototype.renderOrderSummary = function () {
+		var box = el( 'div', { class: 'ssw-checkout-summary' } );
+		box.appendChild( el( 'h4', {}, [ 'Your Order' ] ) );
+
+		var table = el( 'table', { class: 'ssw-order-table' } );
+		var thead = el( 'thead' );
+		thead.appendChild( el( 'tr', {}, [ el( 'th', {}, [ 'Item' ] ), el( 'th', {}, [ 'Points' ] ) ] ) );
+		table.appendChild( thead );
+
+		var tbody = el( 'tbody' );
+		var rows = 0;
+		if ( this.state.template ) {
+			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Website Template: ' + this.state.template.title ] ), el( 'td', {}, [ '—' ] ) ] ) );
+			rows++;
+		}
+		if ( this.state.tier ) {
+			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Package: ' + this.state.tier.title ] ), el( 'td', {}, [ String( this.pointsIncluded() ) ] ) ] ) );
+			rows++;
+		}
+		if ( this.state.domain ) {
+			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Domain: ' + this.state.domain ] ), el( 'td', {}, [ '—' ] ) ] ) );
+			rows++;
+		}
 		this.selectedSolutions().forEach( function ( s ) {
-			list.appendChild( el( 'li', {}, [ s.title + ' (' + s.points + ' pts)' ] ) );
+			tbody.appendChild( el( 'tr', {}, [ el( 'td', {}, [ s.title ] ), el( 'td', {}, [ String( s.points ) ] ) ] ) );
+			rows++;
 		} );
-		if ( ! list.children.length ) list.appendChild( el( 'li', {}, [ 'Nothing selected yet.' ] ) );
-		box.appendChild( list );
+		if ( ! rows ) {
+			tbody.appendChild( el( 'tr', {}, [ el( 'td', { colspan: '2' }, [ 'Nothing selected yet.' ] ) ] ) );
+		}
+		table.appendChild( tbody );
+
+		var tfoot = el( 'tfoot' );
+		var used = this.pointsUsed();
+		var included = this.pointsIncluded();
+		var totalLabel = this.state.tier ? ( used + ' / ' + included + ' pts' ) : ( used + ' pts' );
+		tfoot.appendChild( el( 'tr', {}, [ el( 'td', {}, [ 'Total' ] ), el( 'td', {}, [ totalLabel ] ) ] ) );
+		table.appendChild( tfoot );
+
+		box.appendChild( table );
 		return box;
 	};
 

@@ -44,6 +44,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	protected function register_controls() {
 		$this->register_steps_section();
 		$this->register_tiers_section();
+		$this->register_template_gallery_section();
 		$this->register_domain_section();
 		$this->register_solutions_section();
 		$this->register_checkout_section();
@@ -68,11 +69,23 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->add_control(
 			'enable_tier_step',
 			array(
-				'label'        => __( 'Enable Package Tier + Website Template step', 'strivre-solutions-wizard' ),
+				'label'        => __( 'Enable Package Tier step', 'strivre-solutions-wizard' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'default'      => 'yes',
 				'label_on'     => __( 'On', 'strivre-solutions-wizard' ),
 				'label_off'    => __( 'Off', 'strivre-solutions-wizard' ),
+			)
+		);
+
+		$this->add_control(
+			'enable_template_step',
+			array(
+				'label'        => __( 'Enable Website Template step', 'strivre-solutions-wizard' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'default'      => 'yes',
+				'label_on'     => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off'    => __( 'Off', 'strivre-solutions-wizard' ),
+				'description'  => __( 'A gallery of mockups the visitor picks from after choosing a package.', 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -147,18 +160,11 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			)
 		);
 		$repeater->add_control(
-			'tier_template_image',
+			'tier_badge_color',
 			array(
-				'label'   => __( 'Template thumbnail', 'strivre-solutions-wizard' ),
-				'type'    => Controls_Manager::MEDIA,
-				'default' => array( 'url' => SSW_PLUGIN_URL . 'assets/img/placeholder-template.svg' ),
-			)
-		);
-		$repeater->add_control(
-			'tier_gallery',
-			array(
-				'label' => __( 'Lightbox gallery images', 'strivre-solutions-wizard' ),
-				'type'  => Controls_Manager::GALLERY,
+				'label'   => __( 'Badge color', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::COLOR,
+				'default' => '#002144',
 			)
 		);
 
@@ -175,19 +181,73 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 						'tier_tagline'     => 'Your Essential Online Presence',
 						'tier_description' => 'Up to 3 pages with hosting, SSL, maintenance, security updates, backups, and a Measure Marketing Report.',
 						'tier_points'      => 200,
+						'tier_badge_color' => '#8B5E34',
 					),
 					array(
 						'tier_title'       => 'Silver',
 						'tier_tagline'     => 'More Space & More Support',
 						'tier_description' => 'Up to 5 pages with all Bronze features, plus priority support.',
 						'tier_points'      => 400,
+						'tier_badge_color' => '#B4B8BE',
 					),
 					array(
 						'tier_title'       => 'Gold',
 						'tier_tagline'     => 'Built for Growing Businesses',
 						'tier_description' => 'Up to 10 pages with all Silver features, plus premium support.',
 						'tier_points'      => 800,
+						'tier_badge_color' => '#D6A419',
 					),
+				),
+			)
+		);
+
+		$this->end_controls_section();
+	}
+
+	/* ---------------------------------------------------------------------
+	 * CONTENT: website template gallery
+	 * ------------------------------------------------------------------ */
+
+	private function register_template_gallery_section() {
+		$this->start_controls_section(
+			'section_templates',
+			array(
+				'label'     => __( 'Website Templates', 'strivre-solutions-wizard' ),
+				'tab'       => Controls_Manager::TAB_CONTENT,
+				'condition' => array( 'enable_template_step' => 'yes' ),
+			)
+		);
+
+		$repeater = new Repeater();
+
+		$repeater->add_control(
+			'tmpl_title',
+			array(
+				'label'   => __( 'Title', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::TEXT,
+				'default' => __( 'Template', 'strivre-solutions-wizard' ),
+			)
+		);
+		$repeater->add_control(
+			'tmpl_gallery',
+			array(
+				'label'       => __( 'Gallery images (up to 5)', 'strivre-solutions-wizard' ),
+				'type'        => Controls_Manager::GALLERY,
+				'description' => __( 'The first image is used as the card thumbnail; all of them open in the lightbox when clicked.', 'strivre-solutions-wizard' ),
+			)
+		);
+
+		$this->add_control(
+			'templates',
+			array(
+				'label'       => __( 'Templates', 'strivre-solutions-wizard' ),
+				'type'        => Controls_Manager::REPEATER,
+				'fields'      => $repeater->get_controls(),
+				'title_field' => '{{{ tmpl_title }}}',
+				'default'     => array(
+					array( 'tmpl_title' => 'Template 1' ),
+					array( 'tmpl_title' => 'Template 2' ),
+					array( 'tmpl_title' => 'Template 3' ),
 				),
 			)
 		);
@@ -353,6 +413,15 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		}
 
 		$this->add_control(
+			'field_address_enabled',
+			array(
+				'label'     => __( 'Collect full address (country, street, city, state, ZIP)', 'strivre-solutions-wizard' ),
+				'type'      => Controls_Manager::SWITCHER,
+				'default'   => 'yes',
+			)
+		);
+
+		$this->add_control(
 			'success_message',
 			array(
 				'label'   => __( 'Success message', 'strivre-solutions-wizard' ),
@@ -502,20 +571,34 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
+		$templates = array();
+		if ( 'yes' === $settings['enable_template_step'] ) {
+			foreach ( $settings['templates'] as $tmpl ) {
+				$gallery = array();
+				foreach ( (array) ( $tmpl['tmpl_gallery'] ?? array() ) as $image ) {
+					$gallery[] = $image['url'] ?? '';
+				}
+				$gallery = array_slice( array_values( array_filter( $gallery ) ), 0, 5 );
+				if ( empty( $gallery ) ) {
+					$gallery = array( SSW_PLUGIN_URL . 'assets/img/placeholder-template.svg' );
+				}
+				$templates[] = array(
+					'title'   => $tmpl['tmpl_title'],
+					'image'   => $gallery[0],
+					'gallery' => $gallery,
+				);
+			}
+		}
+
 		$tiers = array();
 		if ( 'yes' === $settings['enable_tier_step'] ) {
 			foreach ( $settings['tiers'] as $tier ) {
-				$gallery = array();
-				foreach ( (array) ( $tier['tier_gallery'] ?? array() ) as $image ) {
-					$gallery[] = $image['url'] ?? '';
-				}
 				$tiers[] = array(
 					'title'       => $tier['tier_title'],
 					'tagline'     => $tier['tier_tagline'],
 					'description' => $tier['tier_description'],
 					'points'      => (int) $tier['tier_points'],
-					'image'       => $tier['tier_template_image']['url'] ?? '',
-					'gallery'     => array_filter( $gallery ),
+					'badgeColor'  => $tier['tier_badge_color'] ?: '#002144',
 				);
 			}
 		}
@@ -538,10 +621,12 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$config = array(
 			'restUrl'        => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
 			'nonce'           => wp_create_nonce( 'wp_rest' ),
+			'enableTemplateStep' => 'yes' === $settings['enable_template_step'],
 			'enableTierStep'  => 'yes' === $settings['enable_tier_step'],
 			'enableDomainStep' => 'yes' === $settings['enable_domain_step'],
 			'preselectParam'  => $settings['preselect_param'] ?: 'solution',
 			'domainHeading'   => $settings['domain_heading'] ?? '',
+			'templates'       => $templates,
 			'tiers'           => $tiers,
 			'solutions'       => $solutions,
 			'fields'          => array(
@@ -549,6 +634,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'email'   => 'yes' === $settings['field_email_required'],
 				'phone'   => 'yes' === $settings['field_phone_required'],
 				'company' => 'yes' === $settings['field_company_required'],
+				'address' => 'yes' === $settings['field_address_enabled'],
 			),
 			'successMessage'  => $settings['success_message'],
 			'pageUrl'         => esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? wp_parse_url( home_url(), PHP_URL_HOST ) ) . ( $_SERVER['REQUEST_URI'] ?? '' ) ),

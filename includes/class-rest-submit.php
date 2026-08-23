@@ -71,8 +71,16 @@ class SSW_REST_Submit {
 			return new WP_Error( 'ssw_invalid_fields', __( 'Please provide at least your name and a valid email.', 'strivre-solutions-wizard' ), array( 'status' => 400 ) );
 		}
 
-		$phone   = sanitize_text_field( $body['phone'] ?? '' );
-		$company = sanitize_text_field( $body['company'] ?? '' );
+		$phone     = sanitize_text_field( $body['phone'] ?? '' );
+		$company   = sanitize_text_field( $body['company'] ?? '' );
+		$first_name = sanitize_text_field( $body['first_name'] ?? '' );
+		$last_name  = sanitize_text_field( $body['last_name'] ?? '' );
+		$country    = sanitize_text_field( $body['country'] ?? '' );
+		$address_1  = sanitize_text_field( $body['address_1'] ?? '' );
+		$address_2  = sanitize_text_field( $body['address_2'] ?? '' );
+		$city       = sanitize_text_field( $body['city'] ?? '' );
+		$state      = sanitize_text_field( $body['state'] ?? '' );
+		$zip        = sanitize_text_field( $body['zip'] ?? '' );
 
 		$tier_title     = sanitize_text_field( $body['tier_title'] ?? '' );
 		$points_included = absint( $body['tier_points'] ?? 0 );
@@ -109,9 +117,17 @@ class SSW_REST_Submit {
 		}
 
 		update_post_meta( $post_id, '_customer_name', $name );
+		update_post_meta( $post_id, '_customer_first_name', $first_name );
+		update_post_meta( $post_id, '_customer_last_name', $last_name );
 		update_post_meta( $post_id, '_customer_email', $email );
 		update_post_meta( $post_id, '_customer_phone', $phone );
 		update_post_meta( $post_id, '_company_name', $company );
+		update_post_meta( $post_id, '_address_country', $country );
+		update_post_meta( $post_id, '_address_line1', $address_1 );
+		update_post_meta( $post_id, '_address_line2', $address_2 );
+		update_post_meta( $post_id, '_address_city', $city );
+		update_post_meta( $post_id, '_address_state', $state );
+		update_post_meta( $post_id, '_address_zip', $zip );
 		update_post_meta( $post_id, '_tier_chosen', $tier_title );
 		update_post_meta( $post_id, '_template_chosen', $template_title );
 		update_post_meta( $post_id, '_domain_chosen', $domain );
@@ -135,6 +151,14 @@ class SSW_REST_Submit {
 				'points_used'      => $points_used,
 				'points_shortfall' => $points_shortfall,
 				'page_url'         => $page_url,
+				'address'          => array(
+					'country' => $country,
+					'line1'   => $address_1,
+					'line2'   => $address_2,
+					'city'    => $city,
+					'state'   => $state,
+					'zip'     => $zip,
+				),
 			)
 		);
 
