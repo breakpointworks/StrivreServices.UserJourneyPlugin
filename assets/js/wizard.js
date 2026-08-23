@@ -374,9 +374,11 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 		this.config.solutions.forEach( function ( sol ) {
 			var selected = this.state.selectedSlugs.indexOf( sol.slug ) !== -1;
-			var card = el( 'div', { class: 'ssw-card' + ( selected ? ' selected' : '' ) } );
-			if ( sol.icon ) card.appendChild( el( 'img', { class: 'ssw-card-icon', src: sol.icon, alt: '' } ) );
-			card.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ sol.points + ' pts' ] ) );
+			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
+			var header = el( 'div', { class: 'ssw-solution-header' } );
+			if ( sol.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: sol.icon, alt: '' } ) );
+			header.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ sol.points + ' pts' ] ) );
+			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ sol.title ] ) );
 			if ( sol.description ) card.appendChild( el( 'p', {}, [ sol.description ] ) );
 			card.addEventListener( 'click', function () {
