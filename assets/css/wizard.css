@@ -107,7 +107,7 @@
 .ssw-points-label { font-size: 14px; font-weight: 600; margin-top: 6px; }
 .ssw-shortfall-banner {
 	background: #FFF6E5; color: var(--ssw-points-shortfall);
-	padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 12px;
+	padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-top: 14px; margin-bottom: 12px;
 }
 
 /* Checkout form */
