@@ -647,19 +647,27 @@
 	SSWWizard.prototype.openLightbox = function ( images ) {
 		this.lightboxImages = images;
 		this.lightboxIndex = 0;
+		if ( this._buildLightboxThumbs ) this._buildLightboxThumbs();
 		this.showLightboxImage();
 		var lb = this.root.querySelector( '.ssw-lightbox' );
 		if ( lb ) lb.classList.add( 'open' );
 	};
 
 	SSWWizard.prototype.showLightboxImage = function () {
-		var img = this.root.querySelector( '.ssw-lightbox img' );
+		var img = this.root.querySelector( '.ssw-lightbox img.ssw-lightbox-main' );
 		if ( img && this.lightboxImages ) img.src = this.lightboxImages[ this.lightboxIndex ];
+
+		var thumbs = this.root.querySelectorAll( '.ssw-lightbox-thumbs img' );
+		thumbs.forEach( function ( thumb, i ) {
+			thumb.classList.toggle( 'active', i === this.lightboxIndex );
+		}.bind( this ) );
 	};
 
 	SSWWizard.prototype.renderLightbox = function () {
 		var lb = el( 'div', { class: 'ssw-lightbox' } );
-		var img = el( 'img', { src: '', alt: '' } );
+		var content = el( 'div', { class: 'ssw-lightbox-content' } );
+		var img = el( 'img', { class: 'ssw-lightbox-main', src: '', alt: '' } );
+		var thumbs = el( 'div', { class: 'ssw-lightbox-thumbs' } );
 		var close = el( 'button', { class: 'ssw-lightbox-close', type: 'button' }, [ '×' ] );
 		var prev = el( 'button', { class: 'ssw-lightbox-prev', type: 'button' }, [ '‹' ] );
 		var next = el( 'button', { class: 'ssw-lightbox-next', type: 'button' }, [ '›' ] );
@@ -677,7 +685,25 @@
 			this.showLightboxImage();
 		}.bind( this ) );
 
-		lb.appendChild( img );
+		// Thumbnail strip is rebuilt each time the lightbox opens (image set
+		// changes per template/tier) rather than at initial render.
+		this._buildLightboxThumbs = function () {
+			thumbs.innerHTML = '';
+			if ( ! this.lightboxImages || this.lightboxImages.length < 2 ) return;
+			this.lightboxImages.forEach( function ( src, i ) {
+				var thumb = el( 'img', { src: src, alt: '', class: i === this.lightboxIndex ? 'active' : '' } );
+				thumb.addEventListener( 'click', function ( e ) {
+					e.stopPropagation();
+					this.lightboxIndex = i;
+					this.showLightboxImage();
+				}.bind( this ) );
+				thumbs.appendChild( thumb );
+			}.bind( this ) );
+		}.bind( this );
+
+		content.appendChild( img );
+		content.appendChild( thumbs );
+		lb.appendChild( content );
 		lb.appendChild( close );
 		lb.appendChild( prev );
 		lb.appendChild( next );
