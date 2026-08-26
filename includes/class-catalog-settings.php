@@ -39,6 +39,7 @@ class SSW_Catalog_Settings {
 	 * own document — Marketing is cheaper and has fewer licenses than Slim).
 	 */
 	public static function defaults() {
+		$icons = SSW_PLUGIN_URL . 'assets/img/icons/catalog/';
 		return array(
 			'tiers' => array(
 				array( 'title' => 'Bronze', 'price' => 150, 'points' => 3, 'pages_note' => 'Up to 3 pages, hosting, SSL, maintenance, security updates, backups, Measure Marketing report', 'badge_color' => '#8B5E34' ),
@@ -46,22 +47,22 @@ class SSW_Catalog_Settings {
 				array( 'title' => 'Gold', 'price' => 350, 'points' => 9, 'pages_note' => 'Up to 10 pages, hosting, SSL, maintenance, premium support, security updates, backups, Measure Marketing report', 'badge_color' => '#D6A419' ),
 			),
 			'modules' => array(
-				array( 'title' => 'Online Booking & Scheduling', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Contact & Lead Generation Forms', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Multi-language Website', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Additional Website Pages', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website page / month' ),
-				array( 'title' => 'Website Diagnostic', 'price' => 20, 'points' => 3, 'unit_note' => 'Per report generated — free for first report' ),
-				array( 'title' => 'Marketing Diagnostic', 'price' => 20, 'points' => 3, 'unit_note' => 'Per report generated — free for first report' ),
-				array( 'title' => 'TA Diagnostics', 'price' => 25, 'points' => 5, 'unit_note' => 'Per report generated — free for first report' ),
-				array( 'title' => 'Live Chat / Chatbot', 'price' => 25, 'points' => 5, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'AI Quote Generator', 'price' => 25, 'points' => 5, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Candidate Management System', 'price' => 30, 'points' => 6, 'unit_note' => 'Per user / month' ),
-				array( 'title' => 'Job Board Integration', 'price' => 30, 'points' => 6, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Skills Testing / Candidate Assessment', 'price' => 30, 'points' => 6, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Invoicing Digital Proposal & E-Signature', 'price' => 30, 'points' => 6, 'unit_note' => 'Per user / month' ),
-				array( 'title' => 'Payment Gateway Integration', 'price' => 35, 'points' => 7, 'unit_note' => 'Per website / month' ),
-				array( 'title' => 'Task Management Module', 'price' => 35, 'points' => 7, 'unit_note' => 'Per user / month' ),
-				array( 'title' => 'E-Commerce (up to 5 products listing)', 'price' => 35, 'points' => 7, 'unit_note' => 'Per website / month' ),
+				array( 'title' => 'Online Booking & Scheduling', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-booking.svg' ),
+				array( 'title' => 'Contact & Lead Generation Forms', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-forms.svg' ),
+				array( 'title' => 'Multi-language Website', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-multilang.svg' ),
+				array( 'title' => 'Additional Website Pages', 'price' => 20, 'points' => 3, 'unit_note' => 'Per website page / month', 'icon' => $icons . 'modules-pages.svg' ),
+				array( 'title' => 'Website Diagnostic', 'price' => 20, 'points' => 3, 'unit_note' => 'Per report generated — free for first report', 'icon' => $icons . 'modules-website-diagnostic.svg' ),
+				array( 'title' => 'Marketing Diagnostic', 'price' => 20, 'points' => 3, 'unit_note' => 'Per report generated — free for first report', 'icon' => $icons . 'modules-marketing-diagnostic.svg' ),
+				array( 'title' => 'TA Diagnostics', 'price' => 25, 'points' => 5, 'unit_note' => 'Per report generated — free for first report', 'icon' => $icons . 'modules-ta-diagnostics.svg' ),
+				array( 'title' => 'Live Chat / Chatbot', 'price' => 25, 'points' => 5, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-livechat.svg' ),
+				array( 'title' => 'AI Quote Generator', 'price' => 25, 'points' => 5, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-ai-quote.svg' ),
+				array( 'title' => 'Candidate Management System', 'price' => 30, 'points' => 6, 'unit_note' => 'Per user / month', 'icon' => $icons . 'modules-candidate-mgmt.svg' ),
+				array( 'title' => 'Job Board Integration', 'price' => 30, 'points' => 6, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-job-board.svg' ),
+				array( 'title' => 'Skills Testing / Candidate Assessment', 'price' => 30, 'points' => 6, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-skills-testing.svg' ),
+				array( 'title' => 'Invoicing Digital Proposal & E-Signature', 'price' => 30, 'points' => 6, 'unit_note' => 'Per user / month', 'icon' => $icons . 'modules-invoicing.svg' ),
+				array( 'title' => 'Payment Gateway Integration', 'price' => 35, 'points' => 7, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-payment.svg' ),
+				array( 'title' => 'Task Management Module', 'price' => 35, 'points' => 7, 'unit_note' => 'Per user / month', 'icon' => $icons . 'modules-task-mgmt.svg' ),
+				array( 'title' => 'E-Commerce (up to 5 products listing)', 'price' => 35, 'points' => 7, 'unit_note' => 'Per website / month', 'icon' => $icons . 'modules-ecommerce.svg' ),
 			),
 			'marketing' => array(
 				array(
@@ -78,30 +79,30 @@ class SSW_Catalog_Settings {
 				),
 			),
 			'licenses' => array(
-				array( 'title' => 'Microsoft 365 Business Standard', 'price' => 35, 'unit_note' => 'Per user / month' ),
-				array( 'title' => 'CRM Platform', 'price' => 150, 'unit_note' => 'Per user / month' ),
-				array( 'title' => 'Cloud Phone System', 'price' => 30, 'unit_note' => 'Per user / month — includes 100 call minutes/month' ),
+				array( 'title' => 'Microsoft 365 Business Standard', 'price' => 35, 'unit_note' => 'Per user / month', 'icon' => $icons . 'license-microsoft365.svg' ),
+				array( 'title' => 'CRM Platform', 'price' => 150, 'unit_note' => 'Per user / month', 'icon' => $icons . 'license-crm.svg' ),
+				array( 'title' => 'Cloud Phone System', 'price' => 30, 'unit_note' => 'Per user / month — includes 100 call minutes/month', 'icon' => $icons . 'license-cloudphone.svg' ),
 			),
 			'measure_tiers' => array(
-				array( 'title' => 'Forever Free', 'price' => 0, 'license_count' => 1, 'addon_price' => 0, 'features' => 'TBA' ),
-				array( 'title' => 'Marketing', 'price' => 25, 'license_count' => 1, 'addon_price' => 25, 'features' => 'Marketing Analytics report' ),
-				array( 'title' => 'Slim', 'price' => 100, 'license_count' => 5, 'addon_price' => 25, 'features' => "Operations: HR, Attendance, Marketing, Finance\nReports: Sales" ),
-				array( 'title' => 'Pro', 'price' => 200, 'license_count' => 5, 'addon_price' => 45, 'features' => "All in Slim plus Sales Product\nAdditional Reports: ROI, Leaderboards" ),
-				array( 'title' => 'Enterprise', 'price' => 250, 'license_count' => 5, 'addon_price' => 55, 'features' => 'Everything including all the add-on reports' ),
+				array( 'title' => 'Forever Free', 'price' => 0, 'license_count' => 1, 'addon_price' => 0, 'features' => 'TBA', 'icon' => $icons . 'measure-tier-free.svg' ),
+				array( 'title' => 'Marketing', 'price' => 25, 'license_count' => 1, 'addon_price' => 25, 'features' => 'Marketing Analytics report', 'icon' => $icons . 'measure-tier-marketing.svg' ),
+				array( 'title' => 'Slim', 'price' => 100, 'license_count' => 5, 'addon_price' => 25, 'features' => "Operations: HR, Attendance, Marketing, Finance\nReports: Sales", 'icon' => $icons . 'measure-tier-slim.svg' ),
+				array( 'title' => 'Pro', 'price' => 200, 'license_count' => 5, 'addon_price' => 45, 'features' => "All in Slim plus Sales Product\nAdditional Reports: ROI, Leaderboards", 'icon' => $icons . 'measure-tier-pro.svg' ),
+				array( 'title' => 'Enterprise', 'price' => 250, 'license_count' => 5, 'addon_price' => 55, 'features' => 'Everything including all the add-on reports', 'icon' => $icons . 'measure-tier-enterprise.svg' ),
 			),
 			'measure_addons' => array(
-				array( 'title' => 'Customer', 'price' => 25, 'licenses_included' => 5 ),
-				array( 'title' => 'KPI', 'price' => 25, 'licenses_included' => 5 ),
-				array( 'title' => 'Pipeline', 'price' => 25, 'licenses_included' => 5 ),
-				array( 'title' => 'Calls', 'price' => 25, 'licenses_included' => 5 ),
-				array( 'title' => 'Jobs', 'price' => 25, 'licenses_included' => 5 ),
-				array( 'title' => 'Scorecard', 'price' => 25, 'licenses_included' => 5 ),
+				array( 'title' => 'Customer', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-customer.svg' ),
+				array( 'title' => 'KPI', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-kpi.svg' ),
+				array( 'title' => 'Pipeline', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-pipeline.svg' ),
+				array( 'title' => 'Calls', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-calls.svg' ),
+				array( 'title' => 'Jobs', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-jobs.svg' ),
+				array( 'title' => 'Scorecard', 'price' => 25, 'licenses_included' => 5, 'icon' => $icons . 'addon-scorecard.svg' ),
 			),
 			'bespoke' => array(
-				array( 'title' => 'Discovery & Solution Design', 'price_label' => 'From US$1,100', 'description' => '' ),
-				array( 'title' => 'Custom Development', 'price_label' => 'US$90/hour', 'description' => '' ),
-				array( 'title' => 'Fixed Project Development', 'price_label' => 'From US$3,700', 'description' => '' ),
-				array( 'title' => 'Enterprise Solutions', 'price_label' => 'Quotation', 'description' => '' ),
+				array( 'title' => 'Discovery & Solution Design', 'price_label' => 'From US$1,100', 'description' => '', 'icon' => $icons . 'bespoke-discovery.svg' ),
+				array( 'title' => 'Custom Development', 'price_label' => 'US$90/hour', 'description' => '', 'icon' => $icons . 'bespoke-custom-dev.svg' ),
+				array( 'title' => 'Fixed Project Development', 'price_label' => 'From US$3,700', 'description' => '', 'icon' => $icons . 'bespoke-fixed-project.svg' ),
+				array( 'title' => 'Enterprise Solutions', 'price_label' => 'Quotation', 'description' => '', 'icon' => $icons . 'bespoke-enterprise-solutions.svg' ),
 			),
 			'enterprise' => array(
 				'title'           => 'Enterprise Plan',
@@ -109,6 +110,7 @@ class SSW_Catalog_Settings {
 				'tier_title'      => 'Gold',
 				'marketing_title' => 'Gold',
 				'measure_title'   => 'Enterprise',
+				'icon'            => $icons . 'enterprise-bundle.svg',
 			),
 		);
 	}
