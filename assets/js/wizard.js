@@ -503,6 +503,7 @@
 		( this.config.catalog.tiers || [] ).forEach( function ( tier ) {
 			var selected = this.state.tierTitle === tier.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			card.appendChild( el( 'div', { class: 'ssw-tier-band', style: 'background:' + ( tier.badgeColor || '#002144' ) + ';' } ) );
 			var header = el( 'div', { class: 'ssw-tier-header' } );
 			header.appendChild( tierBadge( tier, 56 ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
@@ -622,6 +623,7 @@
 		( this.config.catalog.marketing || [] ).forEach( function ( m ) {
 			var selected = this.state.marketingTitle === m.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			card.appendChild( el( 'div', { class: 'ssw-tier-band', style: 'background:' + ( m.badgeColor || '#002144' ) + ';' } ) );
 			var header = el( 'div', { class: 'ssw-tier-header' } );
 			header.appendChild( tierBadge( m, 40 ) );
 			header.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( m.price ) + '/mo/brand' ] ) );
