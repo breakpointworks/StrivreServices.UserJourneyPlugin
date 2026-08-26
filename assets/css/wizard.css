@@ -297,6 +297,14 @@
    mirrors the PDF's colored tier-header bands. */
 .ssw-tier-band { height: 5px; margin: -20px -20px 16px; border-radius: var(--ssw-card-radius) var(--ssw-card-radius) 0 0; }
 
+/* Per-item icons, uploaded via the Catalog admin screen. */
+.ssw-heading-icon { display: inline-flex; margin-right: 8px; color: var(--ssw-secondary); vertical-align: middle; }
+.ssw-bespoke-icon { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+.ssw-enterprise-icon {
+	width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;
+	background: rgba(255,255,255,.15); border-radius: 12px; padding: 8px;
+}
+
 .ssw-price-badge { display: inline-block; font-size: 12.5px; font-weight: 600; color: var(--ssw-border); }
 
 .ssw-feature-list { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; color: var(--ssw-border); }

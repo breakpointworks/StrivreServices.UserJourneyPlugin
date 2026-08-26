@@ -557,7 +557,10 @@
 
 	SSWWizard.prototype.renderChoicesDomainSection = function () {
 		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
-		wrap.appendChild( el( 'h4', {}, [ this.config.headings.domainQuestion || 'Do you need to buy a domain?' ] ) );
+		var heading = el( 'h4', {} );
+		heading.appendChild( el( 'span', { class: 'ssw-heading-icon', html: DOMAIN_SVG } ) );
+		heading.appendChild( document.createTextNode( this.config.headings.domainQuestion || 'Do you need to buy a domain?' ) );
+		wrap.appendChild( heading );
 
 		var toggle = el( 'div', { class: 'ssw-domain-toggle' } );
 		[ true, false ].forEach( function ( val ) {
@@ -593,7 +596,8 @@
 		( this.config.catalog.modules || [] ).forEach( function ( mod ) {
 			var selected = this.state.selectedSlugs.indexOf( mod.slug ) !== -1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
-			var header = el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' } );
+			var header = el( 'div', { class: 'ssw-solution-header', style: mod.icon ? '' : 'justify-content:flex-end;' } );
+			if ( mod.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: mod.icon, alt: '' } ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
 			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ mod.points + ' pts' ] ) );
 			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price ) ] ) );
@@ -653,9 +657,10 @@
 		( this.config.catalog.licenses || [] ).forEach( function ( lic ) {
 			var selected = this.state.selectedLicenseSlugs.indexOf( lic.slug ) !== -1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
-			card.appendChild( el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' }, [
-				el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price ) + '/mo' ] ),
-			] ) );
+			var licHeader = el( 'div', { class: 'ssw-solution-header', style: lic.icon ? '' : 'justify-content:flex-end;' } );
+			if ( lic.icon ) licHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: lic.icon, alt: '' } ) );
+			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price ) + '/mo' ] ) );
+			card.appendChild( licHeader );
 			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
 			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
 			card.addEventListener( 'click', function () {
@@ -680,7 +685,10 @@
 		( this.config.catalog.measureTiers || [] ).forEach( function ( m ) {
 			var selected = this.state.measureTitle === m.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
-			card.appendChild( el( 'div', { class: 'ssw-price-badge', style: 'display:block;text-align:right;margin-bottom:8px;' }, [ money( m.price ) + '/mo' ] ) );
+			var mHeader = el( 'div', { style: 'display:flex;align-items:center;justify-content:' + ( m.icon ? 'space-between' : 'flex-end' ) + ';margin-bottom:8px;' } );
+			if ( m.icon ) mHeader.appendChild( el( 'img', { class: 'ssw-card-icon', style: 'margin-bottom:0;', src: m.icon, alt: '' } ) );
+			mHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( m.price ) + '/mo' ] ) );
+			card.appendChild( mHeader );
 			card.appendChild( el( 'h4', {}, [ m.title ] ) );
 			card.appendChild( el( 'p', { style: 'font-weight:600;' }, [ m.licenseCount + ( 1 === m.licenseCount ? ' license included' : ' licenses included' ) ] ) );
 			var list = el( 'ul', { class: 'ssw-feature-list' } );
@@ -703,9 +711,10 @@
 			this.config.catalog.measureAddons.forEach( function ( a ) {
 				var selected = this.state.selectedMeasureAddonSlugs.indexOf( a.slug ) !== -1;
 				var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
-				card.appendChild( el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' }, [
-					el( 'div', { class: 'ssw-price-badge' }, [ money( a.price ) ] ),
-				] ) );
+				var aHeader = el( 'div', { class: 'ssw-solution-header', style: a.icon ? '' : 'justify-content:flex-end;' } );
+				if ( a.icon ) aHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: a.icon, alt: '' } ) );
+				aHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( a.price ) ] ) );
+				card.appendChild( aHeader );
 				card.appendChild( el( 'h4', {}, [ a.title ] ) );
 				card.appendChild( el( 'p', {}, [ a.licensesIncluded + ' licenses included' ] ) );
 				card.addEventListener( 'click', function () {
@@ -728,7 +737,10 @@
 
 		( this.config.catalog.bespoke || [] ).forEach( function ( b ) {
 			var row = el( 'div', { class: 'ssw-bespoke-row' } );
-			row.appendChild( el( 'span', {}, [ b.title ] ) );
+			var label = el( 'span', { style: 'display:flex;align-items:center;gap:10px;' } );
+			if ( b.icon ) label.appendChild( el( 'img', { class: 'ssw-bespoke-icon', src: b.icon, alt: '' } ) );
+			label.appendChild( el( 'span', {}, [ b.title ] ) );
+			row.appendChild( label );
 			row.appendChild( el( 'span', { class: 'ssw-bespoke-price' }, [ b.priceLabel ] ) );
 			wrap.appendChild( row );
 		} );
@@ -762,10 +774,13 @@
 		wrap.appendChild( el( 'h4', {}, [ this.config.headings.enterpriseSection || 'Want it all?' ] ) );
 
 		var banner = el( 'div', { class: 'ssw-enterprise-banner' + ( this.state.enterpriseSelected ? ' selected' : '' ) } );
+		var textWrap = el( 'div', { style: 'display:flex;align-items:center;gap:16px;' } );
+		if ( ent.icon ) textWrap.appendChild( el( 'img', { class: 'ssw-enterprise-icon', src: ent.icon, alt: '' } ) );
 		var text = el( 'div', {} );
 		text.appendChild( el( 'h4', {}, [ ent.title ] ) );
 		text.appendChild( el( 'p', {}, [ ent.priceLabel + ' — includes ' + ent.tierTitle + ' Website Package, ' + ent.marketingTitle + ' Marketing, and ' + ent.measureTitle + ' Measure Analytics.' ] ) );
-		banner.appendChild( text );
+		textWrap.appendChild( text );
+		banner.appendChild( textWrap );
 		var btn = el( 'button', { type: 'button', class: 'ssw-btn' + ( this.state.enterpriseSelected ? ' ghost' : '' ) }, [ this.state.enterpriseSelected ? 'Remove bundle' : 'Select Enterprise' ] );
 		btn.addEventListener( 'click', function () { this.toggleEnterprise(); }.bind( this ) );
 		banner.appendChild( btn );

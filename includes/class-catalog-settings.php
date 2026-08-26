@@ -124,12 +124,12 @@ class SSW_Catalog_Settings {
 	private static function fields_by_category() {
 		return array(
 			'tiers'          => array( 'title' => 'text', 'price' => 'number', 'points' => 'number', 'pages_note' => 'text', 'badge_color' => 'color' ),
-			'modules'        => array( 'title' => 'text', 'price' => 'number', 'points' => 'number', 'unit_note' => 'text' ),
+			'modules'        => array( 'icon' => 'icon', 'title' => 'text', 'price' => 'number', 'points' => 'number', 'unit_note' => 'text' ),
 			'marketing'      => array( 'title' => 'text', 'price' => 'number', 'badge_color' => 'color', 'features' => 'textarea' ),
-			'licenses'       => array( 'title' => 'text', 'price' => 'number', 'unit_note' => 'text' ),
-			'measure_tiers'  => array( 'title' => 'text', 'price' => 'number', 'license_count' => 'number', 'addon_price' => 'number', 'features' => 'textarea' ),
-			'measure_addons' => array( 'title' => 'text', 'price' => 'number', 'licenses_included' => 'number' ),
-			'bespoke'        => array( 'title' => 'text', 'price_label' => 'text', 'description' => 'text' ),
+			'licenses'       => array( 'icon' => 'icon', 'title' => 'text', 'price' => 'number', 'unit_note' => 'text' ),
+			'measure_tiers'  => array( 'icon' => 'icon', 'title' => 'text', 'price' => 'number', 'license_count' => 'number', 'addon_price' => 'number', 'features' => 'textarea' ),
+			'measure_addons' => array( 'icon' => 'icon', 'title' => 'text', 'price' => 'number', 'licenses_included' => 'number' ),
+			'bespoke'        => array( 'icon' => 'icon', 'title' => 'text', 'price_label' => 'text', 'description' => 'text' ),
 		);
 	}
 
@@ -177,6 +177,8 @@ class SSW_Catalog_Settings {
 						$clean_row[ $key ] = is_numeric( $raw ) ? $raw + 0 : 0;
 					} elseif ( 'color' === $type ) {
 						$clean_row[ $key ] = sanitize_hex_color( $raw ) ?: '#002144';
+					} elseif ( 'icon' === $type ) {
+						$clean_row[ $key ] = esc_url_raw( $raw );
 					} elseif ( 'textarea' === $type ) {
 						$clean_row[ $key ] = sanitize_textarea_field( $raw );
 					} else {
@@ -189,6 +191,7 @@ class SSW_Catalog_Settings {
 
 		$ent = $input['enterprise'] ?? array();
 		$clean['enterprise'] = array(
+			'icon'            => esc_url_raw( $ent['icon'] ?? '' ),
 			'title'           => sanitize_text_field( $ent['title'] ?? '' ),
 			'price_label'     => sanitize_text_field( $ent['price_label'] ?? '' ),
 			'tier_title'      => sanitize_text_field( $ent['tier_title'] ?? '' ),
@@ -203,6 +206,7 @@ class SSW_Catalog_Settings {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
+		wp_enqueue_media();
 		$c      = self::get_all();
 		$fields = self::fields_by_category();
 		$labels = self::category_labels();
@@ -242,6 +246,10 @@ class SSW_Catalog_Settings {
 					<summary><?php esc_html_e( 'Enterprise bundle', 'strivre-solutions-wizard' ); ?></summary>
 					<table class="form-table" role="presentation">
 						<tr>
+							<th><label><?php esc_html_e( 'Icon', 'strivre-solutions-wizard' ); ?></label></th>
+							<td><?php echo $this->render_icon_field( self::OPTION_KEY . '[enterprise][icon]', $c['enterprise']['icon'] ?? '' ); ?></td>
+						</tr>
+						<tr>
 							<th><label><?php esc_html_e( 'Title', 'strivre-solutions-wizard' ); ?></label></th>
 							<td><input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[enterprise][title]" value="<?php echo esc_attr( $c['enterprise']['title'] ); ?>" /></td>
 						</tr>
@@ -280,6 +288,8 @@ class SSW_Catalog_Settings {
 			.ssw-catalog-table input[type="color"] { width: 44px; height: 30px; padding: 2px; }
 			.ssw-catalog-add { margin-top: 4px; }
 			.ssw-catalog-remove { color: #b32d2e; }
+			.ssw-icon-field { display: flex; align-items: center; gap: 6px; }
+			.ssw-icon-preview { width: 28px; height: 28px; object-fit: contain; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; }
 		</style>
 		<script>
 		( function () {
@@ -300,10 +310,54 @@ class SSW_Catalog_Settings {
 					e.preventDefault();
 					e.target.closest( 'tr' ).remove();
 				}
+				if ( e.target.classList.contains( 'ssw-icon-pick' ) ) {
+					e.preventDefault();
+					var wrap  = e.target.closest( '.ssw-icon-field' );
+					var input = wrap.querySelector( 'input[type="hidden"]' );
+					var img   = wrap.querySelector( '.ssw-icon-preview' );
+					var clear = wrap.querySelector( '.ssw-icon-clear' );
+					var frame = wp.media( { title: 'Select an icon', multiple: false, library: { type: 'image' } } );
+					frame.on( 'select', function () {
+						var att = frame.state().get( 'selection' ).first().toJSON();
+						var url = att.sizes && att.sizes.thumbnail ? att.sizes.thumbnail.url : att.url;
+						input.value = att.url;
+						img.src = url;
+						img.style.display = '';
+						clear.style.display = '';
+					} );
+					frame.open();
+				}
+				if ( e.target.classList.contains( 'ssw-icon-clear' ) ) {
+					e.preventDefault();
+					var w2 = e.target.closest( '.ssw-icon-field' );
+					w2.querySelector( 'input[type="hidden"]' ).value = '';
+					var img2 = w2.querySelector( '.ssw-icon-preview' );
+					img2.style.display = 'none';
+					img2.src = '';
+					e.target.style.display = 'none';
+				}
 			} );
 		} )();
 		</script>
 		<?php
+	}
+
+	/**
+	 * Small WP-media-backed icon picker: a hidden input holding the icon URL
+	 * plus a preview thumbnail, wired up by the delegated click handler in
+	 * render_settings_page() (so it works for rows added dynamically too).
+	 */
+	private function render_icon_field( $name, $value ) {
+		ob_start();
+		?>
+		<span class="ssw-icon-field">
+			<input type="hidden" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ); ?>" />
+			<img class="ssw-icon-preview" src="<?php echo esc_url( $value ); ?>" style="<?php echo $value ? '' : 'display:none;'; ?>" alt="" />
+			<button type="button" class="button ssw-icon-pick"><?php esc_html_e( 'Icon', 'strivre-solutions-wizard' ); ?></button>
+			<button type="button" class="button-link ssw-icon-clear" style="<?php echo $value ? '' : 'display:none;'; ?>"><?php esc_html_e( 'Clear', 'strivre-solutions-wizard' ); ?></button>
+		</span>
+		<?php
+		return ob_get_clean();
 	}
 
 	private function render_row( $cat, $index, $row, $fields ) {
@@ -315,7 +369,9 @@ class SSW_Catalog_Settings {
 				$value = $row[ $key ] ?? '';
 				?>
 				<td>
-					<?php if ( 'textarea' === $type ) : ?>
+					<?php if ( 'icon' === $type ) : ?>
+						<?php echo $this->render_icon_field( $name, $value ); ?>
+					<?php elseif ( 'textarea' === $type ) : ?>
 						<textarea name="<?php echo esc_attr( $name ); ?>" placeholder="One per line"><?php echo esc_textarea( $value ); ?></textarea>
 					<?php elseif ( 'color' === $type ) : ?>
 						<input type="color" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $value ?: '#002144' ); ?>" />
