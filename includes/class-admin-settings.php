@@ -167,7 +167,7 @@ class SSW_Admin_Settings {
 				</table>
 
 				<h2 class="title"><?php esc_html_e( 'Admin notification email', 'strivre-solutions-wizard' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {address} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url} — plus, from "Build Your Business" submissions: {domain_wanted} {marketing_tier} {licenses} {measure_tier} {measure_addons} {bespoke_interest} {enterprise_selected}', 'strivre-solutions-wizard' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Merge tags: {name} {email} {phone} {company} {address} {tier} {points_included} {template} {domain} {solutions} {points_used} {points_shortfall} {page_url} — plus, from "Build Your Business" submissions: {domain_wanted} {marketing_tier} {licenses} {measure_tier} {measure_addons} {bespoke_selected} {bespoke_interest} {enterprise_selected}', 'strivre-solutions-wizard' ); ?></p>
 				<table class="form-table" role="presentation">
 					<tr>
 						<th><label for="ssw_admin_email_subject"><?php esc_html_e( 'Subject', 'strivre-solutions-wizard' ); ?></label></th>

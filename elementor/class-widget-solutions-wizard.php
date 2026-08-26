@@ -879,7 +879,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				return array( 'title' => $a['title'], 'price' => (float) $a['price'], 'licensesIncluded' => (int) $a['licenses_included'], 'slug' => sanitize_title( $a['title'] ), 'icon' => $a['icon'] ?? '' );
 			}, $c['measure_addons'] ),
 			'bespoke'  => array_map( function ( $b ) {
-				return array( 'title' => $b['title'], 'priceLabel' => $b['price_label'], 'description' => $b['description'], 'icon' => $b['icon'] ?? '' );
+				return array( 'title' => $b['title'], 'priceLabel' => $b['price_label'], 'description' => $b['description'], 'icon' => $b['icon'] ?? '', 'slug' => sanitize_title( $b['title'] ) );
 			}, $c['bespoke'] ),
 			'enterprise' => array(
 				'title'          => $c['enterprise']['title'],

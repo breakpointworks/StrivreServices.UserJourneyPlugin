@@ -75,6 +75,7 @@
 			selectedMeasureAddonSlugs: [],
 			domainWanted: null,
 			domainName: '',
+			selectedBespokeSlugs: [],
 			bespokeInterested: false,
 			bespokeNotes: '',
 			enterpriseSelected: false,
@@ -201,6 +202,14 @@
 		if ( ! this.config.catalog ) return [];
 		var slugs = this.state.selectedMeasureAddonSlugs;
 		return this.config.catalog.measureAddons.filter( function ( a ) { return slugs.indexOf( a.slug ) !== -1; } );
+	};
+
+	// Bespoke Development is quote-based, not fixed-price — selecting items
+	// here is deliberately never added into usdTotal() below.
+	SSWWizard.prototype.selectedBespoke = function () {
+		if ( ! this.config.catalog ) return [];
+		var slugs = this.state.selectedBespokeSlugs;
+		return this.config.catalog.bespoke.filter( function ( b ) { return slugs.indexOf( b.slug ) !== -1; } );
 	};
 
 	/** Real-USD running total across every priced section (points-based
@@ -735,15 +744,32 @@
 		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
 		wrap.appendChild( el( 'h4', {}, [ this.config.headings.bespokeSection || 'Bespoke Development' ] ) );
 
-		( this.config.catalog.bespoke || [] ).forEach( function ( b ) {
-			var row = el( 'div', { class: 'ssw-bespoke-row' } );
+		( this.config.catalog.bespoke || [] ).forEach( function ( b, i, arr ) {
+			var selected = this.state.selectedBespokeSlugs.indexOf( b.slug ) !== -1;
+			var row = el( 'label', { class: 'ssw-bespoke-row' + ( selected ? ' selected' : '' ) + ( i === arr.length - 1 ? ' last' : '' ) } );
 			var label = el( 'span', { style: 'display:flex;align-items:center;gap:10px;' } );
+			var cb = el( 'input', { type: 'checkbox' } );
+			cb.checked = selected;
+			cb.addEventListener( 'change', function () {
+				var idx = this.state.selectedBespokeSlugs.indexOf( b.slug );
+				if ( idx === -1 ) this.state.selectedBespokeSlugs.push( b.slug );
+				else this.state.selectedBespokeSlugs.splice( idx, 1 );
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			label.appendChild( cb );
 			if ( b.icon ) label.appendChild( el( 'img', { class: 'ssw-bespoke-icon', src: b.icon, alt: '' } ) );
 			label.appendChild( el( 'span', {}, [ b.title ] ) );
 			row.appendChild( label );
 			row.appendChild( el( 'span', { class: 'ssw-bespoke-price' }, [ b.priceLabel ] ) );
 			wrap.appendChild( row );
-		} );
+		}.bind( this ) );
+
+		if ( this.state.selectedBespokeSlugs.length ) {
+			wrap.appendChild( el( 'p', { class: 'ssw-bespoke-quote-note' }, [
+				"These aren't added to your total — we'll follow up with more information and pricing on your quotation.",
+			] ) );
+		}
 
 		var interestWrap = el( 'label', { class: 'ssw-bespoke-interest' } );
 		var cb = el( 'input', { type: 'checkbox' } );
@@ -1060,6 +1086,7 @@
 				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price }; } ),
 				measure_title: this.state.measureTitle || '',
 				measure_addons: this.selectedMeasureAddons().map( function ( a ) { return { title: a.title, price: a.price }; } ),
+				bespoke_selected: this.selectedBespoke().map( function ( b ) { return b.title; } ),
 				bespoke_interested: !! this.state.bespokeInterested,
 				bespoke_notes: this.state.bespokeNotes || '',
 				enterprise_selected: !! this.state.enterpriseSelected,
@@ -1168,8 +1195,12 @@
 				list.appendChild( row( [ el( 'span', {}, [ 'Measure report: ' + a.title ] ) ], money( a.price ) ) );
 				rowCount++;
 			} );
+			this.selectedBespoke().forEach( function ( b ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Bespoke: ' + b.title ] ) ], 'Quote' ) );
+				rowCount++;
+			}.bind( this ) );
 			if ( this.state.bespokeInterested ) {
-				list.appendChild( row( [ el( 'span', {}, [ 'Bespoke Development — interested' ] ) ], '—' ) );
+				list.appendChild( row( [ el( 'span', {}, [ 'Bespoke Development — additional notes' ] ) ], '—' ) );
 				rowCount++;
 			}
 			if ( this.state.enterpriseSelected ) {

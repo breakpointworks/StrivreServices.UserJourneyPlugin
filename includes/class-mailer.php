@@ -75,6 +75,7 @@ class SSW_Mailer {
 			'{licenses}'          => $licenses_lines ? implode( "\n", $licenses_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
 			'{measure_tier}'      => $data['measure_title'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
 			'{measure_addons}'    => $measure_addon_lines ? implode( "\n", $measure_addon_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
+			'{bespoke_selected}'  => ! empty( $data['bespoke_selected'] ) ? implode( "\n", array_map( function ( $t ) { return '- ' . $t; }, $data['bespoke_selected'] ) ) : __( 'none selected', 'strivre-solutions-wizard' ),
 			'{bespoke_interest}'  => ! empty( $data['bespoke_interested'] )
 				? __( 'Yes', 'strivre-solutions-wizard' ) . ( ! empty( $data['bespoke_notes'] ) ? ' — ' . $data['bespoke_notes'] : '' )
 				: __( 'No', 'strivre-solutions-wizard' ),

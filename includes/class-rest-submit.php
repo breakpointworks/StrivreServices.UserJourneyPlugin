@@ -100,6 +100,13 @@ class SSW_REST_Submit {
 		$bespoke_notes       = sanitize_textarea_field( $body['bespoke_notes'] ?? '' );
 		$enterprise_selected = ! empty( $body['enterprise_selected'] );
 
+		$bespoke_selected = array();
+		foreach ( (array) ( $body['bespoke_selected'] ?? array() ) as $title ) {
+			if ( '' !== trim( (string) $title ) ) {
+				$bespoke_selected[] = sanitize_text_field( $title );
+			}
+		}
+
 		$licenses = array();
 		foreach ( (array) ( $body['licenses'] ?? array() ) as $item ) {
 			if ( empty( $item['title'] ) ) {
@@ -176,6 +183,7 @@ class SSW_REST_Submit {
 		update_post_meta( $post_id, '_licenses', wp_json_encode( $licenses ) );
 		update_post_meta( $post_id, '_measure_chosen', $measure_title );
 		update_post_meta( $post_id, '_measure_addons', wp_json_encode( $measure_addons ) );
+		update_post_meta( $post_id, '_bespoke_selected', wp_json_encode( $bespoke_selected ) );
 		update_post_meta( $post_id, '_bespoke_interested', $bespoke_interested ? 1 : 0 );
 		update_post_meta( $post_id, '_bespoke_notes', $bespoke_notes );
 		update_post_meta( $post_id, '_enterprise_selected', $enterprise_selected ? 1 : 0 );
@@ -201,6 +209,7 @@ class SSW_REST_Submit {
 				'licenses'            => $licenses,
 				'measure_title'       => $measure_title,
 				'measure_addons'      => $measure_addons,
+				'bespoke_selected'    => $bespoke_selected,
 				'bespoke_interested'  => $bespoke_interested,
 				'bespoke_notes'       => $bespoke_notes,
 				'enterprise_selected' => $enterprise_selected,

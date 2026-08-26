@@ -331,6 +331,17 @@ class SSW_CPT {
 
 		$this->render_json_list_table( $post->ID, '_licenses', __( 'Licenses', 'strivre-solutions-wizard' ), __( 'License', 'strivre-solutions-wizard' ), 'price', '$' );
 		$this->render_json_list_table( $post->ID, '_measure_addons', __( 'Measure Analytics Add-Ons', 'strivre-solutions-wizard' ), __( 'Report', 'strivre-solutions-wizard' ), 'price', '$' );
+
+		$bespoke_selected = json_decode( get_post_meta( $post->ID, '_bespoke_selected', true ), true );
+		if ( $bespoke_selected ) {
+			echo '<h3 style="margin-top:20px;">' . esc_html__( 'Bespoke Development — Interested In', 'strivre-solutions-wizard' ) . '</h3>';
+			echo '<p>' . esc_html__( 'Not priced yet — follow up with a quotation.', 'strivre-solutions-wizard' ) . '</p>';
+			echo '<ul style="list-style:disc;margin-left:20px;">';
+			foreach ( $bespoke_selected as $title ) {
+				echo '<li>' . esc_html( $title ) . '</li>';
+			}
+			echo '</ul>';
+		}
 	}
 
 	/** Shared renderer for the {title, price} JSON-array meta fields (licenses, measure add-ons). */
@@ -507,6 +518,7 @@ class SSW_CPT {
 				'licenses'          => get_post_meta( $id, '_licenses', true ),
 				'measure_chosen'    => get_post_meta( $id, '_measure_chosen', true ),
 				'measure_addons'    => get_post_meta( $id, '_measure_addons', true ),
+				'bespoke_selected'  => get_post_meta( $id, '_bespoke_selected', true ),
 				'bespoke_interested' => get_post_meta( $id, '_bespoke_interested', true ) ? 'yes' : 'no',
 				'bespoke_notes'     => get_post_meta( $id, '_bespoke_notes', true ),
 				'enterprise_selected' => get_post_meta( $id, '_enterprise_selected', true ) ? 'yes' : 'no',
