@@ -24,6 +24,7 @@ define( 'SSW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once SSW_PLUGIN_DIR . 'includes/class-cpt.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-admin-settings.php';
+require_once SSW_PLUGIN_DIR . 'includes/class-catalog-settings.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-domain-lookup-client.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-domain-provider-hostinger.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-mailer.php';
@@ -65,6 +66,7 @@ final class Strivre_Solutions_Wizard {
 	public function init() {
 		SSW_CPT::instance();
 		SSW_Admin_Settings::instance();
+		SSW_Catalog_Settings::instance();
 		SSW_REST_Domain_Search::instance();
 		SSW_REST_Submit::instance();
 

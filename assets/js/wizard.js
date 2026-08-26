@@ -22,6 +22,23 @@
 	var CHECK_CIRCLE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>';
 	var X_CIRCLE_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>';
 
+	// Common calling codes for the checkout phone field — not exhaustive,
+	// covers the markets Strivre is realistically getting leads from.
+	var PHONE_CODES = [
+		[ '+1', 'US/CA +1' ], [ '+44', 'UK +44' ], [ '+61', 'AU +61' ], [ '+64', 'NZ +64' ],
+		[ '+63', 'PH +63' ], [ '+65', 'SG +65' ], [ '+60', 'MY +60' ], [ '+66', 'TH +66' ],
+		[ '+62', 'ID +62' ], [ '+91', 'IN +91' ], [ '+971', 'AE +971' ], [ '+966', 'SA +966' ],
+		[ '+27', 'ZA +27' ], [ '+353', 'IE +353' ], [ '+49', 'DE +49' ], [ '+33', 'FR +33' ],
+		[ '+34', 'ES +34' ], [ '+39', 'IT +39' ], [ '+31', 'NL +31' ], [ '+46', 'SE +46' ],
+		[ '+81', 'JP +81' ], [ '+82', 'KR +82' ], [ '+86', 'CN +86' ], [ '+852', 'HK +852' ],
+		[ '+886', 'TW +886' ], [ '+52', 'MX +52' ], [ '+55', 'BR +55' ],
+	];
+
+	function money( n ) {
+		n = Number( n ) || 0;
+		return '$' + n.toLocaleString();
+	}
+
 	function tierBadge( tier, size ) {
 		var svg = size <= 20
 			? STAR_SVG
@@ -50,13 +67,28 @@
 			domain: '',
 			selectedSlugs: [],
 			step: 0,
+			// single-page builder ("Build Your Business") additions —
+			// harmless/unused in classic mode.
+			marketingTitle: '',
+			selectedLicenseSlugs: [],
+			measureTitle: '',
+			selectedMeasureAddonSlugs: [],
+			domainWanted: null,
+			domainName: '',
+			bespokeInterested: false,
+			bespokeNotes: '',
+			enterpriseSelected: false,
 		};
 
 		this.steps = [];
-		if ( this.config.enableTierStep ) this.steps.push( 'tier' );
-		if ( this.config.enableTemplateStep ) this.steps.push( 'template' );
-		if ( this.config.enableDomainStep ) this.steps.push( 'domain' );
-		this.steps.push( 'solutions' );
+		if ( 'single_page' === this.config.builderMode ) {
+			this.steps.push( 'choices' );
+		} else {
+			if ( this.config.enableTierStep ) this.steps.push( 'tier' );
+			if ( this.config.enableTemplateStep ) this.steps.push( 'template' );
+			if ( this.config.enableDomainStep ) this.steps.push( 'domain' );
+			this.steps.push( 'solutions' );
+		}
 		this.steps.push( 'checkout' );
 
 		this.restore();
@@ -90,19 +122,37 @@
 		var param = this.config.preselectParam || 'solution';
 		var url = new URL( window.location.href );
 		var slug = url.searchParams.get( param );
-		if ( slug && this.config.solutions.some( function ( s ) { return s.slug === slug; } ) ) {
+		var list = this.modulesList();
+		if ( slug && list.some( function ( s ) { return s.slug === slug; } ) ) {
 			this.state.selectedSlugs.push( slug );
 		} else {
-			this.config.solutions.forEach( function ( s ) {
+			list.forEach( function ( s ) {
 				if ( s.checked ) this.state.selectedSlugs.push( s.slug );
 			}.bind( this ) );
 		}
 	};
 
+	SSWWizard.prototype.isSinglePage = function () {
+		return 'single_page' === this.config.builderMode;
+	};
+
+	// Website Package tiers and Website Modules behave identically between
+	// modes (single-select tier w/ points budget; multi-select points-costed
+	// catalog) — only the source list differs, so the rest of the points
+	// machinery (pointsIncluded/pointsUsed/selectedSolutions/order summary)
+	// stays shared by resolving the list through these two functions.
+	SSWWizard.prototype.tiersList = function () {
+		return ( this.isSinglePage() ? ( this.config.catalog || {} ).tiers : this.config.tiers ) || [];
+	};
+
+	SSWWizard.prototype.modulesList = function () {
+		return ( this.isSinglePage() ? ( this.config.catalog || {} ).modules : this.config.solutions ) || [];
+	};
+
 	SSWWizard.prototype.selectedTier = function () {
 		var title = this.state.tierTitle;
 		if ( ! title ) return null;
-		return ( this.config.tiers || [] ).filter( function ( t ) { return t.title === title; } )[ 0 ] || null;
+		return this.tiersList().filter( function ( t ) { return t.title === title; } )[ 0 ] || null;
 	};
 
 	SSWWizard.prototype.selectedTemplate = function () {
@@ -124,7 +174,46 @@
 
 	SSWWizard.prototype.selectedSolutions = function () {
 		var slugs = this.state.selectedSlugs;
-		return this.config.solutions.filter( function ( s ) { return slugs.indexOf( s.slug ) !== -1; } );
+		return this.modulesList().filter( function ( s ) { return slugs.indexOf( s.slug ) !== -1; } );
+	};
+
+	/* -------------------------------------------- single-page builder resolvers */
+
+	SSWWizard.prototype.selectedMarketing = function () {
+		var title = this.state.marketingTitle;
+		if ( ! title || ! this.config.catalog ) return null;
+		return this.config.catalog.marketing.filter( function ( m ) { return m.title === title; } )[ 0 ] || null;
+	};
+
+	SSWWizard.prototype.selectedLicenses = function () {
+		if ( ! this.config.catalog ) return [];
+		var slugs = this.state.selectedLicenseSlugs;
+		return this.config.catalog.licenses.filter( function ( l ) { return slugs.indexOf( l.slug ) !== -1; } );
+	};
+
+	SSWWizard.prototype.selectedMeasureTier = function () {
+		var title = this.state.measureTitle;
+		if ( ! title || ! this.config.catalog ) return null;
+		return this.config.catalog.measureTiers.filter( function ( m ) { return m.title === title; } )[ 0 ] || null;
+	};
+
+	SSWWizard.prototype.selectedMeasureAddons = function () {
+		if ( ! this.config.catalog ) return [];
+		var slugs = this.state.selectedMeasureAddonSlugs;
+		return this.config.catalog.measureAddons.filter( function ( a ) { return slugs.indexOf( a.slug ) !== -1; } );
+	};
+
+	/** Real-USD running total across every priced section (points-based
+	 *  Website Package/Modules are excluded — those stay points-only). */
+	SSWWizard.prototype.usdTotal = function () {
+		var total = 0;
+		var marketing = this.selectedMarketing();
+		if ( marketing ) total += marketing.price;
+		this.selectedLicenses().forEach( function ( l ) { total += l.price; } );
+		var measure = this.selectedMeasureTier();
+		if ( measure ) total += measure.price;
+		this.selectedMeasureAddons().forEach( function ( a ) { total += a.price; } );
+		return total;
 	};
 
 	SSWWizard.prototype.currentStepName = function () {
@@ -142,6 +231,11 @@
 		if ( 'template' === step ) return !! this.state.templateTitle;
 		if ( 'tier' === step ) return !! this.state.tierTitle;
 		if ( 'domain' === step ) return !! this.state.domainSkipped || !! this.state.domain;
+		// Choices: only the Website Package is a real gate — everything else
+		// (domain question, modules, marketing, licenses, measure, bespoke,
+		// enterprise) is optional and never blocks moving on, same
+		// non-blocking philosophy as the points shortfall banner.
+		if ( 'choices' === step ) return !! this.state.tierTitle;
 		return true;
 	};
 
@@ -157,6 +251,7 @@
 		else if ( 'tier' === step ) panel = this.renderTierPanel();
 		else if ( 'domain' === step ) panel = this.renderDomainPanel();
 		else if ( 'solutions' === step ) panel = this.renderSolutionsPanel();
+		else if ( 'choices' === step ) panel = this.renderChoicesPanel();
 		else panel = this.renderCheckoutPanel();
 
 		this.root.appendChild( panel );
@@ -170,6 +265,7 @@
 			tier: 'Package',
 			domain: 'Domain',
 			solutions: 'Solutions',
+			choices: 'Choices',
 			checkout: 'Checkout',
 		};
 		this.steps.forEach( function ( name, i ) {
@@ -378,6 +474,290 @@
 		if ( btn ) btn.disabled = ! this.canAdvance();
 	};
 
+	/* ------------------------------------------------------------ single-page builder ("Build Your Business") */
+
+	SSWWizard.prototype.renderChoicesPanel = function () {
+		var wrap = el( 'div', { class: 'ssw-panel active' } );
+		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.headings.choices || "Let's build your business" ] ) );
+
+		wrap.appendChild( this.renderChoicesPackageSection() );
+		wrap.appendChild( this.renderChoicesDomainSection() );
+		wrap.appendChild( this.renderChoicesModulesSection() );
+		wrap.appendChild( this.renderChoicesMarketingSection() );
+		wrap.appendChild( this.renderChoicesLicensesSection() );
+		wrap.appendChild( this.renderChoicesMeasureSection() );
+		wrap.appendChild( this.renderChoicesBespokeSection() );
+		wrap.appendChild( this.renderChoicesEnterpriseSection() );
+
+		wrap.appendChild( this.renderNav() );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesPackageSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.tiersSection || 'Website Package' ] ) );
+
+		var locked = this.state.enterpriseSelected;
+		var grid = el( 'div', { class: 'ssw-grid' + ( locked ? ' ssw-grid-locked' : '' ) } );
+		( this.config.catalog.tiers || [] ).forEach( function ( tier ) {
+			var selected = this.state.tierTitle === tier.title;
+			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			var header = el( 'div', { class: 'ssw-tier-header' } );
+			header.appendChild( tierBadge( tier, 56 ) );
+			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
+			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ tier.points + ' pts included' ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( tier.price ) + '/mo' ] ) );
+			header.appendChild( badges );
+			card.appendChild( header );
+			card.appendChild( el( 'h4', {}, [ tier.title ] ) );
+			if ( tier.pagesNote ) card.appendChild( el( 'p', {}, [ tier.pagesNote ] ) );
+			if ( selected && locked ) card.appendChild( el( 'div', { class: 'ssw-card-locked-note' }, [ 'Included in your Enterprise Plan' ] ) );
+			card.addEventListener( 'click', function () {
+				if ( this.state.enterpriseSelected ) return;
+				this.state.tierTitle = tier.title;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesDomainSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.domainQuestion || 'Do you need to buy a domain?' ] ) );
+
+		var toggle = el( 'div', { class: 'ssw-domain-toggle' } );
+		[ true, false ].forEach( function ( val ) {
+			var btn = el( 'button', { type: 'button', class: 'ssw-toggle-btn' + ( this.state.domainWanted === val ? ' active' : '' ) }, [ val ? 'Yes' : 'No' ] );
+			btn.addEventListener( 'click', function () {
+				this.state.domainWanted = val;
+				if ( ! val ) this.state.domainName = '';
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			toggle.appendChild( btn );
+		}.bind( this ) );
+		wrap.appendChild( toggle );
+
+		if ( this.state.domainWanted ) {
+			var fieldWrap = el( 'div', { class: 'ssw-field', style: 'margin-top:12px;max-width:360px;' } );
+			fieldWrap.appendChild( el( 'label', {}, [ 'What domain name do you have in mind?' ] ) );
+			var input = el( 'input', { type: 'text', placeholder: 'yourbusiness.com' } );
+			input.value = this.state.domainName || '';
+			input.addEventListener( 'input', function () { this.state.domainName = input.value; this.persist(); }.bind( this ) );
+			fieldWrap.appendChild( input );
+			wrap.appendChild( fieldWrap );
+		}
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesModulesSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.modulesSection || 'Website Modules' ] ) );
+		if ( this.state.tierTitle ) wrap.appendChild( this.renderPointsBar() );
+
+		var grid = el( 'div', { class: 'ssw-grid' } );
+		( this.config.catalog.modules || [] ).forEach( function ( mod ) {
+			var selected = this.state.selectedSlugs.indexOf( mod.slug ) !== -1;
+			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
+			var header = el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' } );
+			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
+			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ mod.points + ' pts' ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price ) ] ) );
+			header.appendChild( badges );
+			card.appendChild( header );
+			card.appendChild( el( 'h4', {}, [ mod.title ] ) );
+			if ( mod.unitNote ) card.appendChild( el( 'p', {}, [ mod.unitNote ] ) );
+			card.addEventListener( 'click', function () {
+				var idx = this.state.selectedSlugs.indexOf( mod.slug );
+				if ( idx === -1 ) this.state.selectedSlugs.push( mod.slug );
+				else this.state.selectedSlugs.splice( idx, 1 );
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesMarketingSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.marketingSection || 'Marketing' ] ) );
+
+		var locked = this.state.enterpriseSelected;
+		var grid = el( 'div', { class: 'ssw-grid' + ( locked ? ' ssw-grid-locked' : '' ) } );
+		( this.config.catalog.marketing || [] ).forEach( function ( m ) {
+			var selected = this.state.marketingTitle === m.title;
+			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			var header = el( 'div', { class: 'ssw-tier-header' } );
+			header.appendChild( tierBadge( m, 40 ) );
+			header.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( m.price ) + '/mo/brand' ] ) );
+			card.appendChild( header );
+			card.appendChild( el( 'h4', {}, [ m.title ] ) );
+			var list = el( 'ul', { class: 'ssw-feature-list' } );
+			( m.features || [] ).forEach( function ( f ) { list.appendChild( el( 'li', {}, [ f ] ) ); } );
+			card.appendChild( list );
+			if ( selected && locked ) card.appendChild( el( 'div', { class: 'ssw-card-locked-note' }, [ 'Included in your Enterprise Plan' ] ) );
+			card.addEventListener( 'click', function () {
+				if ( this.state.enterpriseSelected ) return;
+				this.state.marketingTitle = m.title;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesLicensesSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.licensesSection || 'Licenses' ] ) );
+
+		var grid = el( 'div', { class: 'ssw-grid' } );
+		( this.config.catalog.licenses || [] ).forEach( function ( lic ) {
+			var selected = this.state.selectedLicenseSlugs.indexOf( lic.slug ) !== -1;
+			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
+			card.appendChild( el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' }, [
+				el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price ) + '/mo' ] ),
+			] ) );
+			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
+			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
+			card.addEventListener( 'click', function () {
+				var idx = this.state.selectedLicenseSlugs.indexOf( lic.slug );
+				if ( idx === -1 ) this.state.selectedLicenseSlugs.push( lic.slug );
+				else this.state.selectedLicenseSlugs.splice( idx, 1 );
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesMeasureSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.measureSection || 'Measure Analytics' ] ) );
+
+		var locked = this.state.enterpriseSelected;
+		var grid = el( 'div', { class: 'ssw-grid' + ( locked ? ' ssw-grid-locked' : '' ) } );
+		( this.config.catalog.measureTiers || [] ).forEach( function ( m ) {
+			var selected = this.state.measureTitle === m.title;
+			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
+			card.appendChild( el( 'div', { class: 'ssw-price-badge', style: 'display:block;text-align:right;margin-bottom:8px;' }, [ money( m.price ) + '/mo' ] ) );
+			card.appendChild( el( 'h4', {}, [ m.title ] ) );
+			card.appendChild( el( 'p', { style: 'font-weight:600;' }, [ m.licenseCount + ( 1 === m.licenseCount ? ' license included' : ' licenses included' ) ] ) );
+			var list = el( 'ul', { class: 'ssw-feature-list' } );
+			( m.features || [] ).forEach( function ( f ) { list.appendChild( el( 'li', {}, [ f ] ) ); } );
+			card.appendChild( list );
+			if ( selected && locked ) card.appendChild( el( 'div', { class: 'ssw-card-locked-note' }, [ 'Included in your Enterprise Plan' ] ) );
+			card.addEventListener( 'click', function () {
+				if ( this.state.enterpriseSelected ) return;
+				this.state.measureTitle = m.title;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+
+		if ( ( this.config.catalog.measureAddons || [] ).length ) {
+			wrap.appendChild( el( 'h4', { class: 'ssw-subsection-heading' }, [ 'Report add-ons' ] ) );
+			var addonGrid = el( 'div', { class: 'ssw-grid' } );
+			this.config.catalog.measureAddons.forEach( function ( a ) {
+				var selected = this.state.selectedMeasureAddonSlugs.indexOf( a.slug ) !== -1;
+				var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
+				card.appendChild( el( 'div', { class: 'ssw-solution-header', style: 'justify-content:flex-end;' }, [
+					el( 'div', { class: 'ssw-price-badge' }, [ money( a.price ) ] ),
+				] ) );
+				card.appendChild( el( 'h4', {}, [ a.title ] ) );
+				card.appendChild( el( 'p', {}, [ a.licensesIncluded + ' licenses included' ] ) );
+				card.addEventListener( 'click', function () {
+					var idx = this.state.selectedMeasureAddonSlugs.indexOf( a.slug );
+					if ( idx === -1 ) this.state.selectedMeasureAddonSlugs.push( a.slug );
+					else this.state.selectedMeasureAddonSlugs.splice( idx, 1 );
+					this.persist();
+					this.render();
+				}.bind( this ) );
+				addonGrid.appendChild( card );
+			}.bind( this ) );
+			wrap.appendChild( addonGrid );
+		}
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesBespokeSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.bespokeSection || 'Bespoke Development' ] ) );
+
+		( this.config.catalog.bespoke || [] ).forEach( function ( b ) {
+			var row = el( 'div', { class: 'ssw-bespoke-row' } );
+			row.appendChild( el( 'span', {}, [ b.title ] ) );
+			row.appendChild( el( 'span', { class: 'ssw-bespoke-price' }, [ b.priceLabel ] ) );
+			wrap.appendChild( row );
+		} );
+
+		var interestWrap = el( 'label', { class: 'ssw-bespoke-interest' } );
+		var cb = el( 'input', { type: 'checkbox' } );
+		cb.checked = !! this.state.bespokeInterested;
+		cb.addEventListener( 'change', function () {
+			this.state.bespokeInterested = cb.checked;
+			this.persist();
+			this.render();
+		}.bind( this ) );
+		interestWrap.appendChild( cb );
+		interestWrap.appendChild( el( 'span', {}, [ "Tell us what you need — we'll follow up" ] ) );
+		wrap.appendChild( interestWrap );
+
+		if ( this.state.bespokeInterested ) {
+			var ta = el( 'textarea', { class: 'ssw-bespoke-notes', placeholder: 'A sentence or two about what you have in mind…', rows: '3' } );
+			ta.value = this.state.bespokeNotes || '';
+			ta.addEventListener( 'input', function () { this.state.bespokeNotes = ta.value; this.persist(); }.bind( this ) );
+			wrap.appendChild( ta );
+		}
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesEnterpriseSection = function () {
+		var ent = this.config.catalog.enterprise;
+		if ( ! ent || ! ent.title ) return el( 'div', {} );
+
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.enterpriseSection || 'Want it all?' ] ) );
+
+		var banner = el( 'div', { class: 'ssw-enterprise-banner' + ( this.state.enterpriseSelected ? ' selected' : '' ) } );
+		var text = el( 'div', {} );
+		text.appendChild( el( 'h4', {}, [ ent.title ] ) );
+		text.appendChild( el( 'p', {}, [ ent.priceLabel + ' — includes ' + ent.tierTitle + ' Website Package, ' + ent.marketingTitle + ' Marketing, and ' + ent.measureTitle + ' Measure Analytics.' ] ) );
+		banner.appendChild( text );
+		var btn = el( 'button', { type: 'button', class: 'ssw-btn' + ( this.state.enterpriseSelected ? ' ghost' : '' ) }, [ this.state.enterpriseSelected ? 'Remove bundle' : 'Select Enterprise' ] );
+		btn.addEventListener( 'click', function () { this.toggleEnterprise(); }.bind( this ) );
+		banner.appendChild( btn );
+		wrap.appendChild( banner );
+		return wrap;
+	};
+
+	SSWWizard.prototype.toggleEnterprise = function () {
+		var ent = this.config.catalog.enterprise;
+		if ( this.state.enterpriseSelected ) {
+			this.state.enterpriseSelected = false;
+			this.state.tierTitle = '';
+			this.state.marketingTitle = '';
+			this.state.measureTitle = '';
+		} else {
+			this.state.enterpriseSelected = true;
+			this.state.tierTitle = ent.tierTitle;
+			this.state.marketingTitle = ent.marketingTitle;
+			this.state.measureTitle = ent.measureTitle;
+		}
+		this.persist();
+		this.render();
+	};
+
 	/* ------------------------------------------------------------ solutions step */
 
 	SSWWizard.prototype.renderSolutionsPanel = function () {
@@ -426,9 +806,12 @@
 		wrap.appendChild( el( 'div', { class: 'ssw-points-label' }, [ used + ' / ' + included + ' points used' ] ) );
 		if ( over ) {
 			var tier = this.selectedTier();
-			wrap.appendChild( el( 'div', { class: 'ssw-shortfall-banner' }, [
-				"You're " + ( used - included ) + ' points over your ' + ( tier ? tier.title : 'package' ) + ' allowance — that\'s fine, we\'ll include it in your proposal.',
-			] ) );
+			var overMsg = this.isSinglePage()
+				// USD is shown on every module card in this mode, so the
+				// shortfall is just informational, not a hidden-price notice.
+				? "You're " + ( used - included ) + ' points over your ' + ( tier ? tier.title : 'package' ) + " allowance — that's fine, any modules beyond your points are simply billed at their listed price."
+				: "You're " + ( used - included ) + ' points over your ' + ( tier ? tier.title : 'package' ) + " allowance — that's fine, we'll include it in your proposal.";
+			wrap.appendChild( el( 'div', { class: 'ssw-shortfall-banner' }, [ overMsg ] ) );
 		}
 		return wrap;
 	};
@@ -522,13 +905,21 @@
 			} )();
 		}
 
+		var phoneCode = null;
 		( function () {
 			var required = !! fields.phone;
 			var fieldWrap = el( 'div', { class: 'ssw-field' } );
 			fieldWrap.appendChild( el( 'label', {}, [ 'Phone' + ( required ? ' *' : ' (optional)' ) ] ) );
+			var row = el( 'div', { class: 'ssw-phone-row' } );
+			phoneCode = el( 'select', {} );
+			PHONE_CODES.forEach( function ( pair ) {
+				phoneCode.appendChild( el( 'option', { value: pair[ 0 ] }, [ pair[ 1 ] ] ) );
+			} );
 			var input = el( 'input', { type: 'tel', name: 'phone' } );
 			if ( required ) input.setAttribute( 'required', 'required' );
-			fieldWrap.appendChild( input );
+			row.appendChild( phoneCode );
+			row.appendChild( input );
+			fieldWrap.appendChild( row );
 			form.appendChild( fieldWrap );
 			inputs.phone = { el: input, requiredKey: 'phone' };
 		} )();
@@ -543,6 +934,24 @@
 			form.appendChild( fieldWrap );
 			inputs.email = { el: input, requiredKey: 'email' };
 		} )();
+
+		// Shared by blur (real-time feedback) and submit (final gate) so the
+		// two never drift out of sync.
+		var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+		function validateField( key ) {
+			var input = inputs[ key ].el;
+			var requiredKey = inputs[ key ].requiredKey;
+			var fieldWrap = input.closest( '.ssw-field' );
+			var value = input.value.trim();
+			var ok = true;
+			if ( requiredKey && fields[ requiredKey ] && ! value ) ok = false;
+			if ( key === 'email' && value && ! EMAIL_RE.test( value ) ) ok = false;
+			fieldWrap.classList.toggle( 'error', ! ok );
+			return ok;
+		}
+		Object.keys( inputs ).forEach( function ( key ) {
+			inputs[ key ].el.addEventListener( 'blur', function () { validateField( key ); } );
+		} );
 
 		var hp = el( 'input', { class: 'ssw-hp', type: 'text', name: 'hp', tabindex: '-1', autocomplete: 'off' } );
 		form.appendChild( hp );
@@ -563,19 +972,7 @@
 			errorBox.textContent = '';
 			var valid = true;
 			Object.keys( inputs ).forEach( function ( key ) {
-				var input = inputs[ key ].el;
-				var requiredKey = inputs[ key ].requiredKey;
-				var fieldWrap = input.closest( '.ssw-field' );
-				fieldWrap.classList.remove( 'error' );
-				var value = input.value.trim();
-				if ( requiredKey && fields[ requiredKey ] && ! value ) {
-					valid = false;
-					fieldWrap.classList.add( 'error' );
-				}
-				if ( key === 'email' && value && ! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( value ) ) {
-					valid = false;
-					fieldWrap.classList.add( 'error' );
-				}
+				if ( ! validateField( key ) ) valid = false;
 			} );
 			if ( ! valid ) {
 				errorBox.textContent = 'Please check the highlighted fields.';
@@ -609,6 +1006,17 @@
 				page_url: this.config.pageUrl || window.location.href,
 				hp: hp.value,
 				started_at: this.startedAt,
+				// single-page builder ("Build Your Business") fields — empty/false in classic mode
+				domain_wanted: !! this.state.domainWanted,
+				domain_name: this.state.domainName || '',
+				marketing_title: this.state.marketingTitle || '',
+				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price }; } ),
+				measure_title: this.state.measureTitle || '',
+				measure_addons: this.selectedMeasureAddons().map( function ( a ) { return { title: a.title, price: a.price }; } ),
+				bespoke_interested: !! this.state.bespokeInterested,
+				bespoke_notes: this.state.bespokeNotes || '',
+				enterprise_selected: !! this.state.enterpriseSelected,
+				phone_country_code: phoneCode ? phoneCode.value : '',
 			};
 
 			fetch( this.config.restUrl + '/submit', {
@@ -678,6 +1086,13 @@
 			], '—' ) );
 			rowCount++;
 		}
+		if ( this.isSinglePage() && this.state.domainWanted ) {
+			list.appendChild( row( [
+				el( 'span', { class: 'ssw-order-icon-svg', html: DOMAIN_SVG } ),
+				el( 'span', {}, [ 'Domain wanted: ' + ( this.state.domainName || '(name not given yet)' ) ] ),
+			], '—' ) );
+			rowCount++;
+		}
 
 		this.selectedSolutions().forEach( function ( s ) {
 			var mainNodes = [];
@@ -686,6 +1101,35 @@
 			list.appendChild( row( mainNodes, String( s.points ) ) );
 			rowCount++;
 		}.bind( this ) );
+
+		if ( this.isSinglePage() ) {
+			var marketing = this.selectedMarketing();
+			if ( marketing ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Marketing: ' + marketing.title ] ) ], money( marketing.price ) + '/mo' ) );
+				rowCount++;
+			}
+			this.selectedLicenses().forEach( function ( l ) {
+				list.appendChild( row( [ el( 'span', {}, [ l.title ] ) ], money( l.price ) + '/mo' ) );
+				rowCount++;
+			} );
+			var measure = this.selectedMeasureTier();
+			if ( measure ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Measure Analytics: ' + measure.title ] ) ], money( measure.price ) + '/mo' ) );
+				rowCount++;
+			}
+			this.selectedMeasureAddons().forEach( function ( a ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Measure report: ' + a.title ] ) ], money( a.price ) ) );
+				rowCount++;
+			} );
+			if ( this.state.bespokeInterested ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Bespoke Development — interested' ] ) ], '—' ) );
+				rowCount++;
+			}
+			if ( this.state.enterpriseSelected ) {
+				list.appendChild( row( [ el( 'span', {}, [ 'Enterprise bundle' ] ) ], '—' ) );
+				rowCount++;
+			}
+		}
 
 		if ( ! rowCount ) {
 			list.appendChild( row( [ el( 'span', {}, [ 'Nothing selected yet.' ] ) ], '' ) );
@@ -700,19 +1144,30 @@
 			breakdown.appendChild( row( [ el( 'span', {}, [ 'Points used' ] ) ], String( used ) ) );
 			breakdown.appendChild( row( [ el( 'span', {}, [ tier.title + ' allowance' ] ) ], '−' + included ) );
 			box.appendChild( breakdown );
+
+			var diff = used - included;
+			var totalLabel = diff > 0 ? diff + ' pts over budget' : ( -diff ) + ' pts remaining';
+			var total = el( 'div', { class: 'ssw-order-total' + ( diff > 0 ? ' over' : '' ) }, [
+				el( 'span', {}, [ 'Points' ] ),
+				el( 'span', {}, [ totalLabel ] ),
+			] );
+			box.appendChild( total );
+		} else if ( ! this.isSinglePage() && used ) {
+			box.appendChild( el( 'div', { class: 'ssw-order-total' }, [
+				el( 'span', {}, [ 'Total' ] ),
+				el( 'span', {}, [ used + ' pts' ] ),
+			] ) );
 		}
 
-		var diff = used - included;
-		var totalLabel = ! tier
-			? used + ' pts'
-			: diff > 0
-				? diff + ' pts over budget'
-				: ( -diff ) + ' pts remaining';
-		var total = el( 'div', { class: 'ssw-order-total' + ( diff > 0 ? ' over' : '' ) }, [
-			el( 'span', {}, [ 'Total' ] ),
-			el( 'span', {}, [ totalLabel ] ),
-		] );
-		box.appendChild( total );
+		if ( this.isSinglePage() ) {
+			var usd = this.usdTotal();
+			if ( usd > 0 ) {
+				box.appendChild( el( 'div', { class: 'ssw-order-total' }, [
+					el( 'span', {}, [ 'Monthly total (excl. Website Package)' ] ),
+					el( 'span', {}, [ money( usd ) + '/mo' ] ),
+				] ) );
+			}
+		}
 
 		return box;
 	};

@@ -112,10 +112,22 @@
 .ssw-btn:hover:not([disabled]):not(.ghost),
 .ssw-btn:focus:not([disabled]):not(.ghost) { background: transparent; color: var(--ssw-primary); border-color: var(--ssw-primary); }
 .ssw-btn:active:not([disabled]) { transform: translateY(1px); }
-.ssw-btn[disabled] { opacity: .5; cursor: not-allowed; }
 .ssw-btn.ghost { background: transparent; color: var(--ssw-primary); }
 .ssw-btn.ghost:hover:not([disabled]),
 .ssw-btn.ghost:focus:not([disabled]) { background: var(--ssw-primary); color: #fff; }
+/* A disabled button can still be :hover/:focus-matched by the theme's own
+   button reset (its rule has no [disabled] exclusion), which would otherwise
+   paint disabled buttons pink mid-cursor-rest. These win on specificity
+   regardless of hover/focus state so "disabled" always reads as disabled. */
+.ssw-btn[disabled],
+.ssw-btn[disabled]:hover,
+.ssw-btn[disabled]:focus { opacity: .5; cursor: not-allowed; outline: none; box-shadow: none; }
+.ssw-btn[disabled]:not(.ghost),
+.ssw-btn[disabled]:not(.ghost):hover,
+.ssw-btn[disabled]:not(.ghost):focus { background: var(--ssw-primary); border-color: var(--ssw-primary); color: #fff; }
+.ssw-btn.ghost[disabled],
+.ssw-btn.ghost[disabled]:hover,
+.ssw-btn.ghost[disabled]:focus { background: transparent; border-color: var(--ssw-primary); color: var(--ssw-primary); }
 .ssw-nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
 
 /* Domain search — unified pill-shaped search bar, consistent with the
@@ -260,8 +272,78 @@
 .ssw-lightbox-prev { left: 24px; top: 50%; transform: translateY(-50%); }
 .ssw-lightbox-next { right: 24px; top: 50%; transform: translateY(-50%); }
 
+/* Single-page builder ("Build Your Business") */
+.ssw-catalog-section { margin: 32px 0; padding-top: 28px; border-top: 1px solid #E4E7EC; }
+.ssw-catalog-section:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.ssw-catalog-section > h4 { margin: 0 0 4px; color: var(--ssw-primary); font-size: 19px; font-family: inherit; }
+.ssw-subsection-heading { margin: 20px 0 4px !important; font-size: 15px !important; color: var(--ssw-border) !important; }
+
+.ssw-price-badge { display: inline-block; font-size: 12.5px; font-weight: 600; color: var(--ssw-border); }
+
+.ssw-feature-list { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; color: var(--ssw-border); }
+.ssw-feature-list li { position: relative; padding-left: 16px; margin-bottom: 5px; line-height: 1.4; }
+.ssw-feature-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; background: var(--ssw-secondary); }
+
+.ssw-grid-locked { position: relative; opacity: .55; pointer-events: none; filter: grayscale(.3); }
+.ssw-card-locked-note {
+	display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+	font-size: 11px; font-weight: 700; letter-spacing: .01em;
+	color: var(--ssw-secondary); background: var(--ssw-selected-tint);
+	border-radius: 999px; padding: 4px 11px;
+}
+
+.ssw-domain-toggle { display: flex; gap: 10px; margin-top: 10px; }
+.ssw-toggle-btn {
+	padding: 9px 22px; border-radius: 999px; border: 1.5px solid #E2E5EA; background: var(--ssw-surface);
+	font-weight: 600; font-size: 14px; color: var(--ssw-text); cursor: pointer;
+	transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.ssw-toggle-btn:hover { border-color: var(--ssw-border); }
+.ssw-toggle-btn.active { border-color: var(--ssw-secondary); background: var(--ssw-selected-tint); color: var(--ssw-secondary); }
+
+.ssw-bespoke-row {
+	display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+	padding: 10px 0; border-bottom: 1px solid #F0F2F5; font-size: 14.5px;
+}
+.ssw-bespoke-row:last-of-type { border-bottom: none; }
+.ssw-bespoke-price { color: var(--ssw-border); font-weight: 600; white-space: nowrap; }
+.ssw-bespoke-interest { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ssw-bespoke-interest input { width: 16px; height: 16px; accent-color: var(--ssw-secondary); }
+.ssw-bespoke-notes {
+	width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 10px;
+	border: 1.5px solid #E2E5EA; background: #FAFBFC; font: inherit; font-size: 14px; color: var(--ssw-text); resize: vertical;
+}
+.ssw-bespoke-notes:focus { outline: none; border-color: var(--ssw-primary); background: var(--ssw-surface); box-shadow: 0 0 0 3px rgba(0,33,68,0.08); }
+
+.ssw-enterprise-banner {
+	display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+	background: var(--ssw-primary); color: #fff; border-radius: var(--ssw-card-radius);
+	padding: 24px 28px; margin-top: 12px;
+}
+.ssw-enterprise-banner h4 { margin: 0 0 6px; color: #fff; }
+.ssw-enterprise-banner p { margin: 0; color: rgba(255,255,255,.75); font-size: 14px; max-width: 46ch; }
+.ssw-enterprise-banner .ssw-btn { background: #fff; color: var(--ssw-primary); border-color: #fff; flex-shrink: 0; }
+.ssw-enterprise-banner .ssw-btn:hover:not([disabled]) { background: transparent; color: #fff; border-color: #fff; }
+.ssw-enterprise-banner .ssw-btn.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }
+.ssw-enterprise-banner .ssw-btn.ghost:hover:not([disabled]) { background: #fff; color: var(--ssw-primary); }
+.ssw-enterprise-banner.selected { background: var(--ssw-secondary); }
+
+.ssw-phone-row { display: flex; gap: 8px; }
+.ssw-phone-row select {
+	/* The theme's own reset.css sets a blanket `select { width: 100% }` —
+	   with flex-basis:auto that width wins and the select swallows the
+	   whole row, so it needs an explicit width here to actually shrink to
+	   its content instead. */
+	flex: 0 0 auto; width: auto; max-width: 130px; padding: 13px 10px; border-radius: 10px;
+	border: 1.5px solid #E2E5EA; background: #FAFBFC; font-size: 14px; color: var(--ssw-text);
+}
+.ssw-phone-row select:focus { outline: none; border-color: var(--ssw-primary); }
+.ssw-phone-row input { flex: 1 1 auto; width: auto; min-width: 0; }
+
 @media (max-width: 600px) {
 	.ssw-wizard { padding: 20px; }
 	.ssw-nav { flex-direction: column-reverse; }
 	.ssw-btn { width: 100%; }
+	.ssw-enterprise-banner { flex-direction: column; align-items: flex-start; }
+	.ssw-phone-row { flex-direction: column; }
 }

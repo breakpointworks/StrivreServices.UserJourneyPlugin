@@ -42,15 +42,56 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	}
 
 	protected function register_controls() {
+		$this->register_builder_mode_section();
 		$this->register_steps_section();
 		$this->register_tiers_section();
 		$this->register_template_gallery_section();
 		$this->register_domain_section();
 		$this->register_solutions_section();
+		$this->register_single_page_section();
 		$this->register_checkout_section();
 		$this->register_colors_section();
 		$this->register_typography_section();
 		$this->register_shape_section();
+	}
+
+	/* ---------------------------------------------------------------------
+	 * CONTENT: builder mode
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * "Classic" is the original 5-stage Package → Template → Domain →
+	 * Solutions → Checkout flow (unchanged, still what the Solutions page
+	 * uses). "Single-page builder" is the newer "Build Your Business" mode:
+	 * one scrolling Choices stage reading its whole catalog from
+	 * SSW_Catalog_Settings (Strivre Requests → Catalog) instead of this
+	 * widget's own per-instance repeaters, then Checkout. Switching this
+	 * control changes which of the sections below even show up.
+	 */
+	private function register_builder_mode_section() {
+		$this->start_controls_section(
+			'section_builder_mode',
+			array(
+				'label' => __( 'Builder Mode', 'strivre-solutions-wizard' ),
+				'tab'   => Controls_Manager::TAB_CONTENT,
+			)
+		);
+
+		$this->add_control(
+			'builder_mode',
+			array(
+				'label'   => __( 'Mode', 'strivre-solutions-wizard' ),
+				'type'    => Controls_Manager::SELECT,
+				'default' => 'classic',
+				'options' => array(
+					'classic'     => __( 'Classic (Package → Template → Domain → Solutions → Checkout)', 'strivre-solutions-wizard' ),
+					'single_page' => __( 'Single-page builder ("Build Your Business")', 'strivre-solutions-wizard' ),
+				),
+				'description' => __( 'Single-page builder reads its whole catalog from Strivre Requests → Catalog instead of the repeaters below.', 'strivre-solutions-wizard' ),
+			)
+		);
+
+		$this->end_controls_section();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -61,8 +102,9 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_steps',
 			array(
-				'label' => __( 'Wizard Steps', 'strivre-solutions-wizard' ),
-				'tab'   => Controls_Manager::TAB_CONTENT,
+				'label'     => __( 'Wizard Steps', 'strivre-solutions-wizard' ),
+				'tab'       => Controls_Manager::TAB_CONTENT,
+				'condition' => array( 'builder_mode' => 'classic' ),
 			)
 		);
 
@@ -123,7 +165,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			array(
 				'label'     => __( 'Package Tiers', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
-				'condition' => array( 'enable_tier_step' => 'yes' ),
+				'condition' => array( 'enable_tier_step' => 'yes', 'builder_mode' => 'classic' ),
 			)
 		);
 
@@ -223,7 +265,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			array(
 				'label'     => __( 'Website Templates', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
-				'condition' => array( 'enable_template_step' => 'yes' ),
+				'condition' => array( 'enable_template_step' => 'yes', 'builder_mode' => 'classic' ),
 			)
 		);
 
@@ -291,7 +333,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			array(
 				'label'     => __( 'Domain Search', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
-				'condition' => array( 'enable_domain_step' => 'yes' ),
+				'condition' => array( 'enable_domain_step' => 'yes', 'builder_mode' => 'classic' ),
 			)
 		);
 
@@ -315,8 +357,9 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_solutions',
 			array(
-				'label' => __( 'Solutions Catalog', 'strivre-solutions-wizard' ),
-				'tab'   => Controls_Manager::TAB_CONTENT,
+				'label'     => __( 'Solutions Catalog', 'strivre-solutions-wizard' ),
+				'tab'       => Controls_Manager::TAB_CONTENT,
+				'condition' => array( 'builder_mode' => 'classic' ),
 			)
 		);
 
@@ -416,6 +459,51 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			$item['sol_icon']    = array( 'url' => SSW_PLUGIN_URL . 'assets/img/icons/' . $item['sol_slug'] . '.svg' );
 		}
 		return $items;
+	}
+
+	/* ---------------------------------------------------------------------
+	 * CONTENT: single-page builder ("Build Your Business")
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Only the copy/headings live here per-instance — the catalog itself
+	 * (prices, points, features) is global, see SSW_Catalog_Settings. A
+	 * heading is still reasonably page-specific even when the underlying
+	 * price list isn't, so those stay editable per widget instance.
+	 */
+	private function register_single_page_section() {
+		$this->start_controls_section(
+			'section_single_page',
+			array(
+				'label'     => __( 'Single-Page Builder Headings', 'strivre-solutions-wizard' ),
+				'tab'       => Controls_Manager::TAB_CONTENT,
+				'condition' => array( 'builder_mode' => 'single_page' ),
+			)
+		);
+
+		$headings = array(
+			'choices_heading'          => array( 'Choices step heading', "Let's build your business" ),
+			'tiers_section_heading'    => array( 'Website Package section heading', 'Website Package' ),
+			'domain_question_heading'  => array( 'Domain question', 'Do you need to buy a domain?' ),
+			'modules_section_heading'  => array( 'Website Modules section heading', 'Website Modules' ),
+			'marketing_section_heading' => array( 'Marketing section heading', 'Marketing' ),
+			'licenses_section_heading' => array( 'Licenses section heading', 'Licenses' ),
+			'measure_section_heading'  => array( 'Measure Analytics section heading', 'Measure Analytics' ),
+			'bespoke_section_heading'  => array( 'Bespoke Development section heading', 'Bespoke Development' ),
+			'enterprise_section_heading' => array( 'Enterprise section heading', 'Want it all?' ),
+		);
+		foreach ( $headings as $key => list( $label, $default ) ) {
+			$this->add_control(
+				$key,
+				array(
+					'label'   => __( $label, 'strivre-solutions-wizard' ),
+					'type'    => Controls_Manager::TEXT,
+					'default' => __( $default, 'strivre-solutions-wizard' ),
+				)
+			);
+		}
+
+		$this->end_controls_section();
 	}
 
 	/* ---------------------------------------------------------------------
@@ -623,7 +711,13 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	 * ------------------------------------------------------------------ */
 
 	protected function render() {
-		$settings = $this->get_settings_for_display();
+		$settings     = $this->get_settings_for_display();
+		$builder_mode = $settings['builder_mode'] ?? 'classic';
+
+		if ( 'single_page' === $builder_mode ) {
+			$this->render_single_page( $settings );
+			return;
+		}
 
 		$templates = array();
 		if ( 'yes' === $settings['enable_template_step'] ) {
@@ -677,6 +771,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$config = array(
 			'restUrl'        => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
 			'nonce'           => wp_create_nonce( 'wp_rest' ),
+			'builderMode'     => 'classic',
 			'enableTemplateStep' => 'yes' === $settings['enable_template_step'],
 			'enableTierStep'  => 'yes' === $settings['enable_tier_step'],
 			'enableDomainStep' => 'yes' === $settings['enable_domain_step'],
@@ -698,6 +793,84 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'company' => 'yes' === $settings['field_company_required'],
 				'address' => 'yes' === $settings['field_address_enabled'],
 			),
+			'successMessage'  => $settings['success_message'],
+			'pageUrl'         => esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? wp_parse_url( home_url(), PHP_URL_HOST ) ) . ( $_SERVER['REQUEST_URI'] ?? '' ) ),
+		);
+		?>
+		<div class="ssw-wizard" data-widget-id="<?php echo esc_attr( $this->get_id() ); ?>" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>">
+			<noscript><?php esc_html_e( 'Please enable JavaScript to use this form.', 'strivre-solutions-wizard' ); ?></noscript>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Single-page builder ("Build Your Business") render path — catalog
+	 * content comes from SSW_Catalog_Settings (global), only headings and
+	 * the checkout field toggles are per-instance.
+	 */
+	private function render_single_page( $settings ) {
+		$c = SSW_Catalog_Settings::get_all();
+
+		$feature_lines = function ( $text ) {
+			return array_values( array_filter( array_map( 'trim', explode( "\n", (string) $text ) ) ) );
+		};
+
+		$catalog = array(
+			'tiers'    => array_map( function ( $t ) {
+				return array( 'title' => $t['title'], 'price' => (float) $t['price'], 'points' => (int) $t['points'], 'pagesNote' => $t['pages_note'], 'badgeColor' => $t['badge_color'] ?: '#002144' );
+			}, $c['tiers'] ),
+			'modules'  => array_map( function ( $m ) {
+				return array( 'title' => $m['title'], 'price' => (float) $m['price'], 'points' => (int) $m['points'], 'unitNote' => $m['unit_note'], 'slug' => sanitize_title( $m['title'] ) );
+			}, $c['modules'] ),
+			'marketing' => array_map( function ( $m ) use ( $feature_lines ) {
+				return array( 'title' => $m['title'], 'price' => (float) $m['price'], 'badgeColor' => $m['badge_color'] ?: '#002144', 'features' => $feature_lines( $m['features'] ) );
+			}, $c['marketing'] ),
+			'licenses' => array_map( function ( $l ) {
+				return array( 'title' => $l['title'], 'price' => (float) $l['price'], 'unitNote' => $l['unit_note'], 'slug' => sanitize_title( $l['title'] ) );
+			}, $c['licenses'] ),
+			'measureTiers' => array_map( function ( $m ) use ( $feature_lines ) {
+				return array( 'title' => $m['title'], 'price' => (float) $m['price'], 'licenseCount' => (int) $m['license_count'], 'addonPrice' => (float) $m['addon_price'], 'features' => $feature_lines( $m['features'] ) );
+			}, $c['measure_tiers'] ),
+			'measureAddons' => array_map( function ( $a ) {
+				return array( 'title' => $a['title'], 'price' => (float) $a['price'], 'licensesIncluded' => (int) $a['licenses_included'], 'slug' => sanitize_title( $a['title'] ) );
+			}, $c['measure_addons'] ),
+			'bespoke'  => array_map( function ( $b ) {
+				return array( 'title' => $b['title'], 'priceLabel' => $b['price_label'], 'description' => $b['description'] );
+			}, $c['bespoke'] ),
+			'enterprise' => array(
+				'title'          => $c['enterprise']['title'],
+				'priceLabel'     => $c['enterprise']['price_label'],
+				'tierTitle'      => $c['enterprise']['tier_title'],
+				'marketingTitle' => $c['enterprise']['marketing_title'],
+				'measureTitle'   => $c['enterprise']['measure_title'],
+			),
+		);
+
+		$config = array(
+			'restUrl'     => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
+			'nonce'       => wp_create_nonce( 'wp_rest' ),
+			'builderMode' => 'single_page',
+			'catalog'     => $catalog,
+			'headings'    => array(
+				'choices'         => $settings['choices_heading'] ?? '',
+				'tiersSection'    => $settings['tiers_section_heading'] ?? '',
+				'domainQuestion'  => $settings['domain_question_heading'] ?? '',
+				'modulesSection'  => $settings['modules_section_heading'] ?? '',
+				'marketingSection' => $settings['marketing_section_heading'] ?? '',
+				'licensesSection' => $settings['licenses_section_heading'] ?? '',
+				'measureSection'  => $settings['measure_section_heading'] ?? '',
+				'bespokeSection'  => $settings['bespoke_section_heading'] ?? '',
+				'enterpriseSection' => $settings['enterprise_section_heading'] ?? '',
+			),
+			'fields'      => array(
+				'name'    => 'yes' === $settings['field_name_required'],
+				'email'   => 'yes' === $settings['field_email_required'],
+				'phone'   => 'yes' === $settings['field_phone_required'],
+				'company' => 'yes' === $settings['field_company_required'],
+				'address' => 'yes' === $settings['field_address_enabled'],
+			),
+			'checkoutHeading' => $settings['checkout_step_heading'] ?? '',
+			'thankyouHeading' => $settings['thankyou_heading'] ?? '',
 			'successMessage'  => $settings['success_message'],
 			'pageUrl'         => esc_url_raw( ( is_ssl() ? 'https://' : 'http://' ) . ( $_SERVER['HTTP_HOST'] ?? wp_parse_url( home_url(), PHP_URL_HOST ) ) . ( $_SERVER['REQUEST_URI'] ?? '' ) ),
 		);

@@ -44,6 +44,16 @@ class SSW_Mailer {
 			$addr['country'] ?? '',
 		) );
 
+		$licenses_lines = array();
+		foreach ( $data['licenses'] ?? array() as $item ) {
+			$licenses_lines[] = sprintf( '- %s ($%s/mo)', $item['title'] ?? '', $item['price'] ?? 0 );
+		}
+
+		$measure_addon_lines = array();
+		foreach ( $data['measure_addons'] ?? array() as $item ) {
+			$measure_addon_lines[] = sprintf( '- %s ($%s)', $item['title'] ?? '', $item['price'] ?? 0 );
+		}
+
 		return array(
 			'{name}'              => $data['name'] ?? '',
 			'{email}'             => $data['email'] ?? '',
@@ -58,6 +68,17 @@ class SSW_Mailer {
 			'{points_used}'       => (string) ( $data['points_used'] ?? 0 ),
 			'{points_shortfall}'  => (string) ( $data['points_shortfall'] ?? 0 ),
 			'{page_url}'          => $data['page_url'] ?? '',
+			'{domain_wanted}'     => ! empty( $data['domain_wanted'] )
+				? sprintf( __( 'Yes — %s', 'strivre-solutions-wizard' ), $data['domain_name'] ?: __( 'no name given yet', 'strivre-solutions-wizard' ) )
+				: __( 'No', 'strivre-solutions-wizard' ),
+			'{marketing_tier}'    => $data['marketing_title'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
+			'{licenses}'          => $licenses_lines ? implode( "\n", $licenses_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
+			'{measure_tier}'      => $data['measure_title'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
+			'{measure_addons}'    => $measure_addon_lines ? implode( "\n", $measure_addon_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
+			'{bespoke_interest}'  => ! empty( $data['bespoke_interested'] )
+				? __( 'Yes', 'strivre-solutions-wizard' ) . ( ! empty( $data['bespoke_notes'] ) ? ' — ' . $data['bespoke_notes'] : '' )
+				: __( 'No', 'strivre-solutions-wizard' ),
+			'{enterprise_selected}' => ! empty( $data['enterprise_selected'] ) ? __( 'Yes', 'strivre-solutions-wizard' ) : __( 'No', 'strivre-solutions-wizard' ),
 		);
 	}
 

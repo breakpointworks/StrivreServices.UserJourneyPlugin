@@ -71,7 +71,9 @@ class SSW_REST_Submit {
 			return new WP_Error( 'ssw_invalid_fields', __( 'Please provide at least your name and a valid email.', 'strivre-solutions-wizard' ), array( 'status' => 400 ) );
 		}
 
-		$phone     = sanitize_text_field( $body['phone'] ?? '' );
+		$phone_raw = sanitize_text_field( $body['phone'] ?? '' );
+		$phone_cc  = sanitize_text_field( $body['phone_country_code'] ?? '' );
+		$phone     = ( $phone_raw && $phone_cc ) ? trim( $phone_cc . ' ' . $phone_raw ) : $phone_raw;
 		$company   = sanitize_text_field( $body['company'] ?? '' );
 		$first_name = sanitize_text_field( $body['first_name'] ?? '' );
 		$last_name  = sanitize_text_field( $body['last_name'] ?? '' );
@@ -87,6 +89,38 @@ class SSW_REST_Submit {
 		$template_title = sanitize_text_field( $body['template_title'] ?? '' );
 		$domain         = sanitize_text_field( $body['domain'] ?? '' );
 		$page_url       = esc_url_raw( $body['page_url'] ?? '' );
+
+		// "Build Your Business" single-page builder fields — empty/false when
+		// the submission came from the classic wizard instead.
+		$domain_wanted       = ! empty( $body['domain_wanted'] );
+		$domain_name         = sanitize_text_field( $body['domain_name'] ?? '' );
+		$marketing_title     = sanitize_text_field( $body['marketing_title'] ?? '' );
+		$measure_title       = sanitize_text_field( $body['measure_title'] ?? '' );
+		$bespoke_interested  = ! empty( $body['bespoke_interested'] );
+		$bespoke_notes       = sanitize_textarea_field( $body['bespoke_notes'] ?? '' );
+		$enterprise_selected = ! empty( $body['enterprise_selected'] );
+
+		$licenses = array();
+		foreach ( (array) ( $body['licenses'] ?? array() ) as $item ) {
+			if ( empty( $item['title'] ) ) {
+				continue;
+			}
+			$licenses[] = array(
+				'title' => sanitize_text_field( $item['title'] ),
+				'price' => (float) ( $item['price'] ?? 0 ),
+			);
+		}
+
+		$measure_addons = array();
+		foreach ( (array) ( $body['measure_addons'] ?? array() ) as $item ) {
+			if ( empty( $item['title'] ) ) {
+				continue;
+			}
+			$measure_addons[] = array(
+				'title' => sanitize_text_field( $item['title'] ),
+				'price' => (float) ( $item['price'] ?? 0 ),
+			);
+		}
 
 		$solutions   = array();
 		$points_used = 0;
@@ -136,6 +170,16 @@ class SSW_REST_Submit {
 		update_post_meta( $post_id, '_points_included', $points_included );
 		update_post_meta( $post_id, '_points_shortfall', $points_shortfall );
 		update_post_meta( $post_id, '_source_page_url', $page_url );
+		update_post_meta( $post_id, '_domain_wanted', $domain_wanted ? 1 : 0 );
+		update_post_meta( $post_id, '_domain_name_wanted', $domain_name );
+		update_post_meta( $post_id, '_marketing_chosen', $marketing_title );
+		update_post_meta( $post_id, '_licenses', wp_json_encode( $licenses ) );
+		update_post_meta( $post_id, '_measure_chosen', $measure_title );
+		update_post_meta( $post_id, '_measure_addons', wp_json_encode( $measure_addons ) );
+		update_post_meta( $post_id, '_bespoke_interested', $bespoke_interested ? 1 : 0 );
+		update_post_meta( $post_id, '_bespoke_notes', $bespoke_notes );
+		update_post_meta( $post_id, '_enterprise_selected', $enterprise_selected ? 1 : 0 );
+		update_post_meta( $post_id, '_phone_country_code', $phone_cc );
 
 		SSW_Mailer::send_notifications(
 			array(
@@ -151,6 +195,15 @@ class SSW_REST_Submit {
 				'points_used'      => $points_used,
 				'points_shortfall' => $points_shortfall,
 				'page_url'         => $page_url,
+				'domain_wanted'       => $domain_wanted,
+				'domain_name'         => $domain_name,
+				'marketing_title'     => $marketing_title,
+				'licenses'            => $licenses,
+				'measure_title'       => $measure_title,
+				'measure_addons'      => $measure_addons,
+				'bespoke_interested'  => $bespoke_interested,
+				'bespoke_notes'       => $bespoke_notes,
+				'enterprise_selected' => $enterprise_selected,
 				'address'          => array(
 					'country' => $country,
 					'line1'   => $address_1,

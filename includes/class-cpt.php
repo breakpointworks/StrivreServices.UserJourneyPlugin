@@ -303,6 +303,11 @@ class SSW_CPT {
 			__( 'Points Included', 'strivre-solutions-wizard' )    => get_post_meta( $post->ID, '_points_included', true ),
 			__( 'Points Used', 'strivre-solutions-wizard' )        => get_post_meta( $post->ID, '_points_used', true ),
 			__( 'Points Shortfall', 'strivre-solutions-wizard' )   => get_post_meta( $post->ID, '_points_shortfall', true ),
+			__( 'Domain Wanted?', 'strivre-solutions-wizard' )     => get_post_meta( $post->ID, '_domain_wanted', true ) ? __( 'Yes', 'strivre-solutions-wizard' ) . ' — ' . get_post_meta( $post->ID, '_domain_name_wanted', true ) : __( 'No', 'strivre-solutions-wizard' ),
+			__( 'Marketing', 'strivre-solutions-wizard' )          => get_post_meta( $post->ID, '_marketing_chosen', true ),
+			__( 'Measure Analytics', 'strivre-solutions-wizard' )  => get_post_meta( $post->ID, '_measure_chosen', true ),
+			__( 'Bespoke Dev. Interest', 'strivre-solutions-wizard' ) => get_post_meta( $post->ID, '_bespoke_interested', true ) ? __( 'Yes', 'strivre-solutions-wizard' ) . ' — ' . get_post_meta( $post->ID, '_bespoke_notes', true ) : __( 'No', 'strivre-solutions-wizard' ),
+			__( 'Enterprise Bundle', 'strivre-solutions-wizard' )  => get_post_meta( $post->ID, '_enterprise_selected', true ) ? __( 'Yes', 'strivre-solutions-wizard' ) : __( 'No', 'strivre-solutions-wizard' ),
 			__( 'Source Page', 'strivre-solutions-wizard' )        => get_post_meta( $post->ID, '_source_page_url', true ),
 		);
 
@@ -323,6 +328,23 @@ class SSW_CPT {
 		} else {
 			echo '<p>' . esc_html__( 'None selected.', 'strivre-solutions-wizard' ) . '</p>';
 		}
+
+		$this->render_json_list_table( $post->ID, '_licenses', __( 'Licenses', 'strivre-solutions-wizard' ), __( 'License', 'strivre-solutions-wizard' ), 'price', '$' );
+		$this->render_json_list_table( $post->ID, '_measure_addons', __( 'Measure Analytics Add-Ons', 'strivre-solutions-wizard' ), __( 'Report', 'strivre-solutions-wizard' ), 'price', '$' );
+	}
+
+	/** Shared renderer for the {title, price} JSON-array meta fields (licenses, measure add-ons). */
+	private function render_json_list_table( $post_id, $meta_key, $heading, $col_label, $value_key, $value_prefix ) {
+		$items = json_decode( get_post_meta( $post_id, $meta_key, true ), true );
+		if ( ! $items ) {
+			return;
+		}
+		echo '<h3 style="margin-top:20px;">' . esc_html( $heading ) . '</h3>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html( $col_label ) . '</th><th>' . esc_html__( 'Price', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
+		foreach ( $items as $item ) {
+			echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $value_prefix . ( $item[ $value_key ] ?? '' ) ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
 	}
 
 	/* ---------------------------------------------------------------------
@@ -479,6 +501,16 @@ class SSW_CPT {
 				'points_used'       => get_post_meta( $id, '_points_used', true ),
 				'points_shortfall'  => get_post_meta( $id, '_points_shortfall', true ),
 				'solutions'         => $solutions ? wp_json_encode( $solutions ) : '',
+				'domain_wanted'     => get_post_meta( $id, '_domain_wanted', true ) ? 'yes' : 'no',
+				'domain_name_wanted' => get_post_meta( $id, '_domain_name_wanted', true ),
+				'marketing_chosen'  => get_post_meta( $id, '_marketing_chosen', true ),
+				'licenses'          => get_post_meta( $id, '_licenses', true ),
+				'measure_chosen'    => get_post_meta( $id, '_measure_chosen', true ),
+				'measure_addons'    => get_post_meta( $id, '_measure_addons', true ),
+				'bespoke_interested' => get_post_meta( $id, '_bespoke_interested', true ) ? 'yes' : 'no',
+				'bespoke_notes'     => get_post_meta( $id, '_bespoke_notes', true ),
+				'enterprise_selected' => get_post_meta( $id, '_enterprise_selected', true ) ? 'yes' : 'no',
+				'phone_country_code' => get_post_meta( $id, '_phone_country_code', true ),
 				'source_page_url'   => get_post_meta( $id, '_source_page_url', true ),
 			);
 		}
