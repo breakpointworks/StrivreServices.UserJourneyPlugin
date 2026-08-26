@@ -44,6 +44,12 @@
 
 /* Cards / grid */
 .ssw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+/* Fixed 3-per-row, used where a leftover partial row should center under
+   the row above (Measure Analytics tiers, report add-ons) instead of
+   auto-fit's left-aligned wrap. Flex, not grid, so the last row's items
+   center via justify-content rather than sitting in grid columns 1/2. */
+.ssw-grid-fixed3 { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 16px 0; }
+.ssw-grid-fixed3 > * { flex: 1 1 calc((100% - 32px) / 3); min-width: 220px; }
 .ssw-card {
 	position: relative;
 	background: var(--ssw-surface);

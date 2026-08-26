@@ -263,9 +263,32 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->start_controls_section(
 			'section_templates',
 			array(
-				'label'     => __( 'Website Templates', 'strivre-solutions-wizard' ),
-				'tab'       => Controls_Manager::TAB_CONTENT,
-				'condition' => array( 'enable_template_step' => 'yes', 'builder_mode' => 'classic' ),
+				'label' => __( 'Website Templates', 'strivre-solutions-wizard' ),
+				'tab'   => Controls_Manager::TAB_CONTENT,
+				// Shown for classic mode via its own step toggle, OR for the
+				// single-page builder via its separate "off by default" toggle
+				// (register_single_page_section) — the two modes don't share
+				// one switch since single-page should start hidden even
+				// though classic's default is on.
+				'conditions' => array(
+					'relation' => 'or',
+					'terms'    => array(
+						array(
+							'relation' => 'and',
+							'terms'    => array(
+								array( 'name' => 'builder_mode', 'operator' => '==', 'value' => 'classic' ),
+								array( 'name' => 'enable_template_step', 'operator' => '==', 'value' => 'yes' ),
+							),
+						),
+						array(
+							'relation' => 'and',
+							'terms'    => array(
+								array( 'name' => 'builder_mode', 'operator' => '==', 'value' => 'single_page' ),
+								array( 'name' => 'enable_choices_templates', 'operator' => '==', 'value' => 'yes' ),
+							),
+						),
+					),
+				),
 			)
 		);
 
@@ -478,6 +501,18 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'label'     => __( 'Single-Page Builder Headings', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
 				'condition' => array( 'builder_mode' => 'single_page' ),
+			)
+		);
+
+		$this->add_control(
+			'enable_choices_templates',
+			array(
+				'label'       => __( 'Show Website Template section', 'strivre-solutions-wizard' ),
+				'type'        => Controls_Manager::SWITCHER,
+				'default'     => '',
+				'label_on'    => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off'   => __( 'Off', 'strivre-solutions-wizard' ),
+				'description' => __( 'Off by default for this mode. Turn on to add the template gallery (configured below in "Website Templates") to the Choices page.', 'strivre-solutions-wizard' ),
 			)
 		);
 
@@ -719,26 +754,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			return;
 		}
 
-		$templates = array();
-		if ( 'yes' === $settings['enable_template_step'] ) {
-			foreach ( $settings['templates'] as $tmpl ) {
-				$gallery = array();
-				foreach ( (array) ( $tmpl['tmpl_gallery'] ?? array() ) as $image ) {
-					$gallery[] = $image['url'] ?? '';
-				}
-				$gallery = array_slice( array_values( array_filter( $gallery ) ), 0, 5 );
-				if ( empty( $gallery ) ) {
-					for ( $i = 1; $i <= 5; $i++ ) {
-						$gallery[] = SSW_PLUGIN_URL . 'assets/img/placeholder-template-' . $i . '.svg';
-					}
-				}
-				$templates[] = array(
-					'title'   => $tmpl['tmpl_title'],
-					'image'   => $gallery[0],
-					'gallery' => $gallery,
-				);
-			}
-		}
+		$templates = 'yes' === $settings['enable_template_step'] ? $this->build_templates_config( $settings ) : array();
 
 		$tiers = array();
 		if ( 'yes' === $settings['enable_tier_step'] ) {
@@ -804,6 +820,34 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	}
 
 	/**
+	 * Shared by both render paths — builds the JS-facing templates array
+	 * (title/image/gallery, placeholder mockups when no images uploaded)
+	 * from the `templates` repeater, which both modes read from since a
+	 * template gallery is presentation content, not global pricing.
+	 */
+	private function build_templates_config( $settings ) {
+		$templates = array();
+		foreach ( $settings['templates'] as $tmpl ) {
+			$gallery = array();
+			foreach ( (array) ( $tmpl['tmpl_gallery'] ?? array() ) as $image ) {
+				$gallery[] = $image['url'] ?? '';
+			}
+			$gallery = array_slice( array_values( array_filter( $gallery ) ), 0, 5 );
+			if ( empty( $gallery ) ) {
+				for ( $i = 1; $i <= 5; $i++ ) {
+					$gallery[] = SSW_PLUGIN_URL . 'assets/img/placeholder-template-' . $i . '.svg';
+				}
+			}
+			$templates[] = array(
+				'title'   => $tmpl['tmpl_title'],
+				'image'   => $gallery[0],
+				'gallery' => $gallery,
+			);
+		}
+		return $templates;
+	}
+
+	/**
 	 * Single-page builder ("Build Your Business") render path — catalog
 	 * content comes from SSW_Catalog_Settings (global), only headings and
 	 * the checkout field toggles are per-instance.
@@ -846,11 +890,17 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			),
 		);
 
+		$enable_choices_templates = 'yes' === ( $settings['enable_choices_templates'] ?? '' );
+
 		$config = array(
 			'restUrl'     => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
 			'nonce'       => wp_create_nonce( 'wp_rest' ),
 			'builderMode' => 'single_page',
 			'catalog'     => $catalog,
+			'enableChoicesTemplates' => $enable_choices_templates,
+			'templates'   => $enable_choices_templates ? $this->build_templates_config( $settings ) : array(),
+			'templateHeading'    => $settings['template_step_heading'] ?? '',
+			'templateSubheading' => $settings['template_step_subheading'] ?? '',
 			'headings'    => array(
 				'choices'         => $settings['choices_heading'] ?? '',
 				'tiersSection'    => $settings['tiers_section_heading'] ?? '',

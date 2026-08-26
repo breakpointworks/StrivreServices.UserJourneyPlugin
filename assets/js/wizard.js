@@ -481,6 +481,7 @@
 		wrap.appendChild( el( 'h3', { class: 'ssw-heading' }, [ this.config.headings.choices || "Let's build your business" ] ) );
 
 		wrap.appendChild( this.renderChoicesPackageSection() );
+		if ( this.config.enableChoicesTemplates ) wrap.appendChild( this.renderChoicesTemplateSection() );
 		wrap.appendChild( this.renderChoicesDomainSection() );
 		wrap.appendChild( this.renderChoicesModulesSection() );
 		wrap.appendChild( this.renderChoicesMarketingSection() );
@@ -515,6 +516,35 @@
 			card.addEventListener( 'click', function () {
 				if ( this.state.enterpriseSelected ) return;
 				this.state.tierTitle = tier.title;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			grid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	SSWWizard.prototype.renderChoicesTemplateSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		wrap.appendChild( el( 'h4', {}, [ this.config.templateHeading || 'Pick a website template' ] ) );
+		wrap.appendChild( el( 'p', {}, [ this.config.templateSubheading || 'Click a mockup to preview it, then select the one you want.' ] ) );
+
+		var grid = el( 'div', { class: 'ssw-grid' } );
+		( this.config.templates || [] ).forEach( function ( tmpl ) {
+			var selected = this.state.templateTitle === tmpl.title;
+			var card = el( 'div', { class: 'ssw-card' + ( selected ? ' selected' : '' ) } );
+			if ( tmpl.image ) {
+				var img = el( 'img', { src: tmpl.image, alt: tmpl.title } );
+				img.addEventListener( 'click', function ( e ) {
+					e.stopPropagation();
+					this.openLightbox( tmpl.gallery && tmpl.gallery.length ? tmpl.gallery : [ tmpl.image ] );
+				}.bind( this ) );
+				card.appendChild( img );
+			}
+			card.appendChild( el( 'h4', {}, [ tmpl.title ] ) );
+			card.addEventListener( 'click', function () {
+				this.state.templateTitle = tmpl.title;
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -644,7 +674,7 @@
 		wrap.appendChild( el( 'h4', {}, [ this.config.headings.measureSection || 'Measure Analytics' ] ) );
 
 		var locked = this.state.enterpriseSelected;
-		var grid = el( 'div', { class: 'ssw-grid' + ( locked ? ' ssw-grid-locked' : '' ) } );
+		var grid = el( 'div', { class: 'ssw-grid-fixed3' + ( locked ? ' ssw-grid-locked' : '' ) } );
 		( this.config.catalog.measureTiers || [] ).forEach( function ( m ) {
 			var selected = this.state.measureTitle === m.title;
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
@@ -667,7 +697,7 @@
 
 		if ( ( this.config.catalog.measureAddons || [] ).length ) {
 			wrap.appendChild( el( 'h4', { class: 'ssw-subsection-heading' }, [ 'Report add-ons' ] ) );
-			var addonGrid = el( 'div', { class: 'ssw-grid' } );
+			var addonGrid = el( 'div', { class: 'ssw-grid-fixed3' } );
 			this.config.catalog.measureAddons.forEach( function ( a ) {
 				var selected = this.state.selectedMeasureAddonSlugs.indexOf( a.slug ) !== -1;
 				var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
