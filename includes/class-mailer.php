@@ -33,7 +33,8 @@ class SSW_Mailer {
 	private static function build_tags( array $data ) {
 		$solutions_lines = array();
 		foreach ( $data['solutions'] ?? array() as $item ) {
-			$solutions_lines[] = sprintf( '- %s (%s pts)', $item['title'] ?? '', $item['points'] ?? 0 );
+			$qty = (int) ( $item['qty'] ?? 1 );
+			$solutions_lines[] = sprintf( '- %s%s (%s pts)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} users)" : '', $item['points'] ?? 0 );
 		}
 
 		$addr       = $data['address'] ?? array();
@@ -46,12 +47,13 @@ class SSW_Mailer {
 
 		$licenses_lines = array();
 		foreach ( $data['licenses'] ?? array() as $item ) {
-			$licenses_lines[] = sprintf( '- %s ($%s/mo)', $item['title'] ?? '', $item['price'] ?? 0 );
+			$qty = (int) ( $item['qty'] ?? 1 );
+			$licenses_lines[] = sprintf( '- %s%s ($%s/mo)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} licenses)" : '', $item['price'] ?? 0 );
 		}
 
 		$measure_addon_lines = array();
 		foreach ( $data['measure_addons'] ?? array() as $item ) {
-			$measure_addon_lines[] = sprintf( '- %s ($%s)', $item['title'] ?? '', $item['price'] ?? 0 );
+			$measure_addon_lines[] = sprintf( '- %s (%s licenses, $%s)', $item['title'] ?? '', $item['qty'] ?? 5, $item['price'] ?? 0 );
 		}
 
 		return array(

@@ -320,17 +320,17 @@ class SSW_CPT {
 		$solutions = json_decode( get_post_meta( $post->ID, '_solutions', true ), true );
 		echo '<h3 style="margin-top:20px;">' . esc_html__( 'Selected Solutions', 'strivre-solutions-wizard' ) . '</h3>';
 		if ( $solutions ) {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Qty', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
 			foreach ( $solutions as $item ) {
-				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
+				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['qty'] ?? '1' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
 		} else {
 			echo '<p>' . esc_html__( 'None selected.', 'strivre-solutions-wizard' ) . '</p>';
 		}
 
-		$this->render_json_list_table( $post->ID, '_licenses', __( 'Licenses', 'strivre-solutions-wizard' ), __( 'License', 'strivre-solutions-wizard' ), 'price', '$' );
-		$this->render_json_list_table( $post->ID, '_measure_addons', __( 'Measure Analytics Add-Ons', 'strivre-solutions-wizard' ), __( 'Report', 'strivre-solutions-wizard' ), 'price', '$' );
+		$this->render_json_list_table( $post->ID, '_licenses', __( 'Licenses', 'strivre-solutions-wizard' ), __( 'License', 'strivre-solutions-wizard' ), 'price', '$', true );
+		$this->render_json_list_table( $post->ID, '_measure_addons', __( 'Measure Analytics Add-Ons', 'strivre-solutions-wizard' ), __( 'Report', 'strivre-solutions-wizard' ), 'price', '$', true );
 
 		$bespoke_selected = json_decode( get_post_meta( $post->ID, '_bespoke_selected', true ), true );
 		if ( $bespoke_selected ) {
@@ -345,15 +345,23 @@ class SSW_CPT {
 	}
 
 	/** Shared renderer for the {title, price} JSON-array meta fields (licenses, measure add-ons). */
-	private function render_json_list_table( $post_id, $meta_key, $heading, $col_label, $value_key, $value_prefix ) {
+	private function render_json_list_table( $post_id, $meta_key, $heading, $col_label, $value_key, $value_prefix, $show_qty = false ) {
 		$items = json_decode( get_post_meta( $post_id, $meta_key, true ), true );
 		if ( ! $items ) {
 			return;
 		}
 		echo '<h3 style="margin-top:20px;">' . esc_html( $heading ) . '</h3>';
-		echo '<table class="widefat striped"><thead><tr><th>' . esc_html( $col_label ) . '</th><th>' . esc_html__( 'Price', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
+		echo '<table class="widefat striped"><thead><tr><th>' . esc_html( $col_label ) . '</th>';
+		if ( $show_qty ) {
+			echo '<th>' . esc_html__( 'Qty', 'strivre-solutions-wizard' ) . '</th>';
+		}
+		echo '<th>' . esc_html__( 'Price', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
 		foreach ( $items as $item ) {
-			echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $value_prefix . ( $item[ $value_key ] ?? '' ) ) . '</td></tr>';
+			echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td>';
+			if ( $show_qty ) {
+				echo '<td>' . esc_html( $item['qty'] ?? '1' ) . '</td>';
+			}
+			echo '<td>' . esc_html( $value_prefix . ( $item[ $value_key ] ?? '' ) ) . '</td></tr>';
 		}
 		echo '</tbody></table>';
 	}

@@ -115,6 +115,7 @@ class SSW_REST_Submit {
 			$licenses[] = array(
 				'title' => sanitize_text_field( $item['title'] ),
 				'price' => (float) ( $item['price'] ?? 0 ),
+				'qty'   => max( 1, absint( $item['qty'] ?? 1 ) ),
 			);
 		}
 
@@ -126,6 +127,7 @@ class SSW_REST_Submit {
 			$measure_addons[] = array(
 				'title' => sanitize_text_field( $item['title'] ),
 				'price' => (float) ( $item['price'] ?? 0 ),
+				'qty'   => max( 1, absint( $item['qty'] ?? 5 ) ),
 			);
 		}
 
@@ -140,6 +142,7 @@ class SSW_REST_Submit {
 			$solutions[] = array(
 				'title'  => sanitize_text_field( $item['title'] ),
 				'points' => $points,
+				'qty'    => max( 1, absint( $item['qty'] ?? 1 ) ),
 			);
 		}
 		$points_shortfall = max( 0, $points_used - $points_included );

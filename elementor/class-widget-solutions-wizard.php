@@ -516,6 +516,18 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'enable_choices_measure',
+			array(
+				'label'       => __( 'Show Measure Analytics section', 'strivre-solutions-wizard' ),
+				'type'        => Controls_Manager::SWITCHER,
+				'default'     => '',
+				'label_on'    => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off'   => __( 'Off', 'strivre-solutions-wizard' ),
+				'description' => __( 'Off by default. Turn on to add the Measure Analytics tiers and report add-ons (configured in the global Catalog settings) to the Choices page.', 'strivre-solutions-wizard' ),
+			)
+		);
+
 		$headings = array(
 			'choices_heading'          => array( 'Choices step heading', "Let's build your business" ),
 			'tiers_section_heading'    => array( 'Website Package section heading', 'Website Package' ),
@@ -524,6 +536,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			'marketing_section_heading' => array( 'Marketing section heading', 'Marketing' ),
 			'licenses_section_heading' => array( 'Licenses section heading', 'Licenses' ),
 			'measure_section_heading'  => array( 'Measure Analytics section heading', 'Measure Analytics' ),
+			'measure_addons_section_heading' => array( 'Report Add-ons section heading', 'Report Add-ons' ),
 			'bespoke_section_heading'  => array( 'Bespoke Development section heading', 'Bespoke Development' ),
 			'enterprise_section_heading' => array( 'Enterprise section heading', 'Want it all?' ),
 		);
@@ -892,6 +905,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		);
 
 		$enable_choices_templates = 'yes' === ( $settings['enable_choices_templates'] ?? '' );
+		$enable_choices_measure   = 'yes' === ( $settings['enable_choices_measure'] ?? '' );
 
 		$config = array(
 			'restUrl'     => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
@@ -899,6 +913,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			'builderMode' => 'single_page',
 			'catalog'     => $catalog,
 			'enableChoicesTemplates' => $enable_choices_templates,
+			'enableChoicesMeasure'   => $enable_choices_measure,
 			'templates'   => $enable_choices_templates ? $this->build_templates_config( $settings ) : array(),
 			'templateHeading'    => $settings['template_step_heading'] ?? '',
 			'templateSubheading' => $settings['template_step_subheading'] ?? '',
@@ -910,6 +925,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				'marketingSection' => $settings['marketing_section_heading'] ?? '',
 				'licensesSection' => $settings['licenses_section_heading'] ?? '',
 				'measureSection'  => $settings['measure_section_heading'] ?? '',
+				'measureAddonsSection' => $settings['measure_addons_section_heading'] ?? '',
 				'bespokeSection'  => $settings['bespoke_section_heading'] ?? '',
 				'enterpriseSection' => $settings['enterprise_section_heading'] ?? '',
 			),

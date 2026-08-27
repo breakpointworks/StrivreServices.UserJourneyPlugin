@@ -70,9 +70,12 @@
 			// single-page builder ("Build Your Business") additions —
 			// harmless/unused in classic mode.
 			marketingTitle: '',
+			moduleQuantities: {},
 			selectedLicenseSlugs: [],
+			licenseQuantities: {},
 			measureTitle: '',
 			selectedMeasureAddonSlugs: [],
+			measureAddonQuantities: {},
 			domainWanted: null,
 			domainName: '',
 			selectedBespokeSlugs: [],
@@ -169,13 +172,51 @@
 
 	SSWWizard.prototype.pointsUsed = function () {
 		var total = 0;
-		this.selectedSolutions().forEach( function ( s ) { total += s.points; } );
+		this.selectedSolutions().forEach( function ( s ) { total += s.points * this.moduleQtyFor( s ); }.bind( this ) );
 		return total;
 	};
 
 	SSWWizard.prototype.selectedSolutions = function () {
 		var slugs = this.state.selectedSlugs;
 		return this.modulesList().filter( function ( s ) { return slugs.indexOf( s.slug ) !== -1; } );
+	};
+
+	// Items billed "Per user / month" or "Per license / month" (per the pricing
+	// PDF) get a quantity dropdown instead of being a flat per-item price —
+	// driven off the unit note text so new catalog rows opt in automatically.
+	SSWWizard.prototype.isPerUnit = function ( item ) {
+		return !! ( item && item.unitNote && /^per (user|license)/i.test( item.unitNote ) );
+	};
+
+	SSWWizard.prototype.moduleQtyFor = function ( mod ) {
+		if ( ! this.isPerUnit( mod ) ) return 1;
+		return this.state.moduleQuantities[ mod.slug ] || 1;
+	};
+
+	SSWWizard.prototype.licenseQtyFor = function ( lic ) {
+		if ( ! this.isPerUnit( lic ) ) return 1;
+		return this.state.licenseQuantities[ lic.slug ] || 1;
+	};
+
+	// Volume discount straight from the pricing PDF's "Add-On Modules" table
+	// (5 licenses = full price, then discount brackets up to 100).
+	SSWWizard.prototype.measureAddonDiscountRate = function ( qty ) {
+		if ( qty >= 51 ) return 0.25;
+		if ( qty >= 26 ) return 0.20;
+		if ( qty >= 11 ) return 0.15;
+		if ( qty >= 6 ) return 0.10;
+		return 0;
+	};
+
+	SSWWizard.prototype.measureAddonQtyFor = function ( addon ) {
+		return this.state.measureAddonQuantities[ addon.slug ] || addon.licensesIncluded || 5;
+	};
+
+	SSWWizard.prototype.measureAddonPriceFor = function ( addon ) {
+		var qty = this.measureAddonQtyFor( addon );
+		var perLicense = addon.price / ( addon.licensesIncluded || 5 );
+		var rate = this.measureAddonDiscountRate( qty );
+		return Math.round( perLicense * qty * ( 1 - rate ) * 100 ) / 100;
 	};
 
 	/* -------------------------------------------- single-page builder resolvers */
@@ -218,10 +259,10 @@
 		var total = 0;
 		var marketing = this.selectedMarketing();
 		if ( marketing ) total += marketing.price;
-		this.selectedLicenses().forEach( function ( l ) { total += l.price; } );
+		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
 		var measure = this.selectedMeasureTier();
 		if ( measure ) total += measure.price;
-		this.selectedMeasureAddons().forEach( function ( a ) { total += a.price; } );
+		this.selectedMeasureAddons().forEach( function ( a ) { total += this.measureAddonPriceFor( a ); }.bind( this ) );
 		return total;
 	};
 
@@ -495,7 +536,8 @@
 		wrap.appendChild( this.renderChoicesModulesSection() );
 		wrap.appendChild( this.renderChoicesMarketingSection() );
 		wrap.appendChild( this.renderChoicesLicensesSection() );
-		wrap.appendChild( this.renderChoicesMeasureSection() );
+		if ( this.config.enableChoicesMeasure ) wrap.appendChild( this.renderChoicesMeasureSection() );
+		wrap.appendChild( this.renderChoicesMeasureAddonsSection() );
 		wrap.appendChild( this.renderChoicesBespokeSection() );
 		wrap.appendChild( this.renderChoicesEnterpriseSection() );
 
@@ -604,26 +646,55 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 		( this.config.catalog.modules || [] ).forEach( function ( mod ) {
 			var selected = this.state.selectedSlugs.indexOf( mod.slug ) !== -1;
+			var perUnit = this.isPerUnit( mod );
+			var qty = selected ? this.moduleQtyFor( mod ) : 1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var header = el( 'div', { class: 'ssw-solution-header', style: mod.icon ? '' : 'justify-content:flex-end;' } );
 			if ( mod.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: mod.icon, alt: '' } ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
-			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ mod.points + ' pts' ] ) );
-			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price ) ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * qty ) + ' pts' ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * qty ) ] ) );
 			header.appendChild( badges );
 			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ mod.title ] ) );
 			if ( mod.unitNote ) card.appendChild( el( 'p', {}, [ mod.unitNote ] ) );
+			if ( selected && perUnit ) {
+				card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, 'users' ) );
+			}
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedSlugs.indexOf( mod.slug );
 				if ( idx === -1 ) this.state.selectedSlugs.push( mod.slug );
-				else this.state.selectedSlugs.splice( idx, 1 );
+				else { this.state.selectedSlugs.splice( idx, 1 ); delete this.state.moduleQuantities[ mod.slug ]; }
 				this.persist();
 				this.render();
 			}.bind( this ) );
 			grid.appendChild( card );
 		}.bind( this ) );
 		wrap.appendChild( grid );
+		return wrap;
+	};
+
+	/** Quantity dropdown for per-user/per-license catalog items — stops
+	 *  propagation so choosing a value doesn't also toggle the card's
+	 *  selection state (the click handler lives on the card itself). */
+	SSWWizard.prototype.renderQuantityField = function ( stateKey, slug, qty, unitLabel, min, max ) {
+		min = min || 1;
+		max = max || 20;
+		var wrap = el( 'div', { class: 'ssw-qty-field' } );
+		wrap.appendChild( el( 'label', {}, [ 'How many ' + unitLabel + '?' ] ) );
+		var select = el( 'select' );
+		for ( var i = min; i <= max; i++ ) {
+			var opt = el( 'option', { value: String( i ) }, [ String( i ) ] );
+			if ( i === qty ) opt.setAttribute( 'selected', 'selected' );
+			select.appendChild( opt );
+		}
+		select.addEventListener( 'click', function ( e ) { e.stopPropagation(); } );
+		select.addEventListener( 'change', function () {
+			this.state[ stateKey ][ slug ] = parseInt( select.value, 10 ) || min;
+			this.persist();
+			this.render();
+		}.bind( this ) );
+		wrap.appendChild( select );
 		return wrap;
 	};
 
@@ -665,17 +736,22 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 		( this.config.catalog.licenses || [] ).forEach( function ( lic ) {
 			var selected = this.state.selectedLicenseSlugs.indexOf( lic.slug ) !== -1;
+			var perUnit = this.isPerUnit( lic );
+			var qty = selected ? this.licenseQtyFor( lic ) : 1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var licHeader = el( 'div', { class: 'ssw-solution-header', style: lic.icon ? '' : 'justify-content:flex-end;' } );
 			if ( lic.icon ) licHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: lic.icon, alt: '' } ) );
-			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price ) + '/mo' ] ) );
+			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty ) + '/mo' ] ) );
 			card.appendChild( licHeader );
 			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
 			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
+			if ( selected && perUnit ) {
+				card.appendChild( this.renderQuantityField( 'licenseQuantities', lic.slug, qty, 'licenses' ) );
+			}
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedLicenseSlugs.indexOf( lic.slug );
 				if ( idx === -1 ) this.state.selectedLicenseSlugs.push( lic.slug );
-				else this.state.selectedLicenseSlugs.splice( idx, 1 );
+				else { this.state.selectedLicenseSlugs.splice( idx, 1 ); delete this.state.licenseQuantities[ lic.slug ]; }
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -713,30 +789,51 @@
 			grid.appendChild( card );
 		}.bind( this ) );
 		wrap.appendChild( grid );
+		return wrap;
+	};
 
-		if ( ( this.config.catalog.measureAddons || [] ).length ) {
-			wrap.appendChild( el( 'h4', { class: 'ssw-subsection-heading' }, [ 'Report add-ons' ] ) );
-			var addonGrid = el( 'div', { class: 'ssw-grid-fixed3' } );
-			this.config.catalog.measureAddons.forEach( function ( a ) {
-				var selected = this.state.selectedMeasureAddonSlugs.indexOf( a.slug ) !== -1;
-				var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
-				var aHeader = el( 'div', { class: 'ssw-solution-header', style: a.icon ? '' : 'justify-content:flex-end;' } );
-				if ( a.icon ) aHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: a.icon, alt: '' } ) );
-				aHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( a.price ) ] ) );
-				card.appendChild( aHeader );
-				card.appendChild( el( 'h4', {}, [ a.title ] ) );
-				card.appendChild( el( 'p', {}, [ a.licensesIncluded + ' licenses included' ] ) );
-				card.addEventListener( 'click', function () {
-					var idx = this.state.selectedMeasureAddonSlugs.indexOf( a.slug );
-					if ( idx === -1 ) this.state.selectedMeasureAddonSlugs.push( a.slug );
-					else this.state.selectedMeasureAddonSlugs.splice( idx, 1 );
-					this.persist();
-					this.render();
-				}.bind( this ) );
-				addonGrid.appendChild( card );
+	// A standalone section, deliberately not gated by enableChoicesMeasure —
+	// the client wants Report Add-ons shown regardless of whether the
+	// Measure Analytics tiers section above is enabled.
+	SSWWizard.prototype.renderChoicesMeasureAddonsSection = function () {
+		var wrap = el( 'div', { class: 'ssw-catalog-section' } );
+		if ( ! ( this.config.catalog.measureAddons || [] ).length ) return wrap;
+
+		wrap.appendChild( el( 'h4', {}, [ this.config.headings.measureAddonsSection || 'Report Add-ons' ] ) );
+		var addonGrid = el( 'div', { class: 'ssw-grid-fixed3' } );
+		this.config.catalog.measureAddons.forEach( function ( a ) {
+			var selected = this.state.selectedMeasureAddonSlugs.indexOf( a.slug ) !== -1;
+			var qty = this.measureAddonQtyFor( a );
+			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
+			var aHeader = el( 'div', { class: 'ssw-solution-header', style: a.icon ? '' : 'justify-content:flex-end;' } );
+			if ( a.icon ) aHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: a.icon, alt: '' } ) );
+			var aBadges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
+			aBadges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( this.measureAddonPriceFor( a ) ) ] ) );
+			var rate = this.measureAddonDiscountRate( qty );
+			if ( selected && rate > 0 ) {
+				aBadges.appendChild( el( 'div', { class: 'ssw-discount-badge' }, [ ( rate * 100 ) + '% off' ] ) );
+			}
+			aHeader.appendChild( aBadges );
+			card.appendChild( aHeader );
+			card.appendChild( el( 'h4', {}, [ a.title ] ) );
+			if ( selected ) {
+				card.appendChild( this.renderQuantityField( 'measureAddonQuantities', a.slug, qty, 'licenses', 5, 100 ) );
+			} else {
+				card.appendChild( el( 'p', {}, [ ( a.licensesIncluded || 5 ) + ' licenses included' ] ) );
+			}
+			card.addEventListener( 'click', function () {
+				var idx = this.state.selectedMeasureAddonSlugs.indexOf( a.slug );
+				if ( idx === -1 ) this.state.selectedMeasureAddonSlugs.push( a.slug );
+				else { this.state.selectedMeasureAddonSlugs.splice( idx, 1 ); delete this.state.measureAddonQuantities[ a.slug ]; }
+				this.persist();
+				this.render();
 			}.bind( this ) );
-			wrap.appendChild( addonGrid );
-		}
+			addonGrid.appendChild( card );
+		}.bind( this ) );
+		wrap.appendChild( addonGrid );
+		wrap.appendChild( el( 'p', { class: 'ssw-points-disclaimer' }, [
+			'5 licenses is full price; volume discounts apply automatically at 6+ (10% off), 11+ (15% off), 26+ (20% off), and 51+ (25% off). Need more than 100? Contact us for custom pricing.',
+		] ) );
 		return wrap;
 	};
 
@@ -877,6 +974,14 @@
 		bar.appendChild( el( 'div', { class: 'ssw-points-bar-fill' + ( over ? ' over' : ''), style: 'width:' + pct + '%;' } ) );
 		wrap.appendChild( bar );
 		wrap.appendChild( el( 'div', { class: 'ssw-points-label' }, [ used + ' / ' + included + ' points used' ] ) );
+		if ( this.isSinglePage() ) {
+			// Straight from the pricing PDF's "Important" note — points and
+			// USD are both shown side by side in this mode, so this needs to
+			// be stated plainly rather than assumed.
+			wrap.appendChild( el( 'p', { class: 'ssw-points-disclaimer' }, [
+				'Points are for module selection only and have no cash value. Unused points cannot be converted into discounts or refunded.',
+			] ) );
+		}
 		if ( over ) {
 			var tier = this.selectedTier();
 			var overMsg = this.isSinglePage()
@@ -1075,7 +1180,7 @@
 				tier_points: this.pointsIncluded(),
 				template_title: this.state.templateTitle || '',
 				domain: this.state.domain || '',
-				solutions: this.selectedSolutions().map( function ( s ) { return { title: s.title, points: s.points }; } ),
+				solutions: this.selectedSolutions().map( function ( s ) { var qty = this.moduleQtyFor( s ); return { title: s.title, points: s.points * qty, qty: qty }; }.bind( this ) ),
 				page_url: this.config.pageUrl || window.location.href,
 				hp: hp.value,
 				started_at: this.startedAt,
@@ -1083,9 +1188,9 @@
 				domain_wanted: !! this.state.domainWanted,
 				domain_name: this.state.domainName || '',
 				marketing_title: this.state.marketingTitle || '',
-				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price }; } ),
+				licenses: this.selectedLicenses().map( function ( l ) { var qty = this.licenseQtyFor( l ); return { title: l.title, price: l.price * qty, qty: qty }; }.bind( this ) ),
 				measure_title: this.state.measureTitle || '',
-				measure_addons: this.selectedMeasureAddons().map( function ( a ) { return { title: a.title, price: a.price }; } ),
+				measure_addons: this.selectedMeasureAddons().map( function ( a ) { return { title: a.title, price: this.measureAddonPriceFor( a ), qty: this.measureAddonQtyFor( a ) }; }.bind( this ) ),
 				bespoke_selected: this.selectedBespoke().map( function ( b ) { return b.title; } ),
 				bespoke_interested: !! this.state.bespokeInterested,
 				bespoke_notes: this.state.bespokeNotes || '',
@@ -1169,10 +1274,11 @@
 		}
 
 		this.selectedSolutions().forEach( function ( s ) {
+			var qty = this.moduleQtyFor( s );
 			var mainNodes = [];
 			if ( s.icon ) mainNodes.push( el( 'img', { class: 'ssw-order-icon', src: s.icon, alt: '' } ) );
-			mainNodes.push( el( 'span', {}, [ s.title ] ) );
-			list.appendChild( row( mainNodes, String( s.points ) ) );
+			mainNodes.push( el( 'span', {}, [ s.title + ( qty > 1 ? ' (×' + qty + ' users)' : '' ) ] ) );
+			list.appendChild( row( mainNodes, String( s.points * qty ) ) );
 			rowCount++;
 		}.bind( this ) );
 
@@ -1183,18 +1289,20 @@
 				rowCount++;
 			}
 			this.selectedLicenses().forEach( function ( l ) {
-				list.appendChild( row( [ el( 'span', {}, [ l.title ] ) ], money( l.price ) + '/mo' ) );
+				var lqty = this.licenseQtyFor( l );
+				list.appendChild( row( [ el( 'span', {}, [ l.title + ( lqty > 1 ? ' (×' + lqty + ' licenses)' : '' ) ] ) ], money( l.price * lqty ) + '/mo' ) );
 				rowCount++;
-			} );
+			}.bind( this ) );
 			var measure = this.selectedMeasureTier();
 			if ( measure ) {
 				list.appendChild( row( [ el( 'span', {}, [ 'Measure Analytics: ' + measure.title ] ) ], money( measure.price ) + '/mo' ) );
 				rowCount++;
 			}
 			this.selectedMeasureAddons().forEach( function ( a ) {
-				list.appendChild( row( [ el( 'span', {}, [ 'Measure report: ' + a.title ] ) ], money( a.price ) ) );
+				var aqty = this.measureAddonQtyFor( a );
+				list.appendChild( row( [ el( 'span', {}, [ 'Measure report: ' + a.title + ' (' + aqty + ' licenses)' ] ) ], money( this.measureAddonPriceFor( a ) ) ) );
 				rowCount++;
-			} );
+			}.bind( this ) );
 			this.selectedBespoke().forEach( function ( b ) {
 				list.appendChild( row( [ el( 'span', {}, [ 'Bespoke: ' + b.title ] ) ], 'Quote' ) );
 				rowCount++;
