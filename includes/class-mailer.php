@@ -31,10 +31,12 @@ class SSW_Mailer {
 	}
 
 	private static function build_tags( array $data ) {
+		$unit_labels     = array( 'user' => 'users', 'license' => 'licenses', 'month' => 'months', 'report' => 'reports' );
 		$solutions_lines = array();
 		foreach ( $data['solutions'] ?? array() as $item ) {
-			$qty = (int) ( $item['qty'] ?? 1 );
-			$solutions_lines[] = sprintf( '- %s%s (%s pts)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} users)" : '', $item['points'] ?? 0 );
+			$qty  = (int) ( $item['qty'] ?? 1 );
+			$unit = $unit_labels[ $item['unit'] ?? '' ] ?? 'units';
+			$solutions_lines[] = sprintf( '- %s%s (%s pts)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} {$unit})" : '', $item['points'] ?? 0 );
 		}
 
 		$addr       = $data['address'] ?? array();

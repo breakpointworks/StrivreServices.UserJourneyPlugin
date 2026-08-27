@@ -172,7 +172,7 @@
 
 	SSWWizard.prototype.pointsUsed = function () {
 		var total = 0;
-		this.selectedSolutions().forEach( function ( s ) { total += s.points * this.moduleQtyFor( s ); }.bind( this ) );
+		this.selectedSolutions().forEach( function ( s ) { total += s.points * this.moduleBillableQty( s ); }.bind( this ) );
 		return total;
 	};
 
@@ -181,11 +181,23 @@
 		return this.modulesList().filter( function ( s ) { return slugs.indexOf( s.slug ) !== -1; } );
 	};
 
-	// Items billed "Per user / month" or "Per license / month" (per the pricing
-	// PDF) get a quantity dropdown instead of being a flat per-item price —
-	// driven off the unit note text so new catalog rows opt in automatically.
+	// Every billable unit note in the pricing PDF gets its own dropdown kind:
+	// "Per user" / "Per license" -> a headcount dropdown (unchanged from
+	// before), "Per website [page] / month" -> a term-length dropdown capped
+	// at 12 months, "Per report generated - free for first report" -> a
+	// report-count dropdown where the first unit is free. Driven off the
+	// catalog's own unit-note text so new rows opt in automatically.
+	SSWWizard.prototype.unitKindFor = function ( item ) {
+		var note = ( item && item.unitNote || '' ).toLowerCase();
+		if ( /^per user/.test( note ) ) return 'user';
+		if ( /^per license/.test( note ) ) return 'license';
+		if ( /^per report generated/.test( note ) ) return 'report';
+		if ( /^per website( page)?\s*\/\s*month/.test( note ) ) return 'month';
+		return '';
+	};
+
 	SSWWizard.prototype.isPerUnit = function ( item ) {
-		return !! ( item && item.unitNote && /^per (user|license)/i.test( item.unitNote ) );
+		return !! this.unitKindFor( item );
 	};
 
 	SSWWizard.prototype.moduleQtyFor = function ( mod ) {
@@ -193,9 +205,22 @@
 		return this.state.moduleQuantities[ mod.slug ] || 1;
 	};
 
+	// The billable count differs from the selected dropdown value for
+	// "report" items only — the first report is free per the PDF, so 1
+	// selected report bills 0, 2 selected bills 1, etc.
+	SSWWizard.prototype.moduleBillableQty = function ( mod ) {
+		var qty = this.moduleQtyFor( mod );
+		return 'report' === this.unitKindFor( mod ) ? Math.max( 0, qty - 1 ) : qty;
+	};
+
 	SSWWizard.prototype.licenseQtyFor = function ( lic ) {
 		if ( ! this.isPerUnit( lic ) ) return 1;
 		return this.state.licenseQuantities[ lic.slug ] || 1;
+	};
+
+	var QTY_KIND_CONFIG = { user: [ 'users', 1, 20 ], license: [ 'licenses', 1, 20 ], month: [ 'months', 1, 12 ], report: [ 'reports', 1, 12 ] };
+	SSWWizard.prototype.qtyUnitLabel = function ( kind ) {
+		return ( QTY_KIND_CONFIG[ kind ] || [ 'units' ] )[ 0 ];
 	};
 
 	// Volume discount straight from the pricing PDF's "Add-On Modules" table
@@ -646,20 +671,27 @@
 		var grid = el( 'div', { class: 'ssw-grid' } );
 		( this.config.catalog.modules || [] ).forEach( function ( mod ) {
 			var selected = this.state.selectedSlugs.indexOf( mod.slug ) !== -1;
-			var perUnit = this.isPerUnit( mod );
+			var kind = this.unitKindFor( mod );
 			var qty = selected ? this.moduleQtyFor( mod ) : 1;
+			var billableQty = selected ? this.moduleBillableQty( mod ) : 1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var header = el( 'div', { class: 'ssw-solution-header', style: mod.icon ? '' : 'justify-content:flex-end;' } );
 			if ( mod.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: mod.icon, alt: '' } ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
-			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * qty ) + ' pts' ] ) );
-			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * qty ) ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * billableQty ) + ' pts' ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * billableQty ) ] ) );
 			header.appendChild( badges );
 			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ mod.title ] ) );
 			if ( mod.unitNote ) card.appendChild( el( 'p', {}, [ mod.unitNote ] ) );
-			if ( selected && perUnit ) {
-				card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, 'users' ) );
+			if ( selected && kind ) {
+				var cfg = QTY_KIND_CONFIG[ kind ];
+				card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, cfg[ 0 ], cfg[ 1 ], cfg[ 2 ] ) );
+				if ( 'report' === kind ) {
+					card.appendChild( el( 'p', { class: 'ssw-qty-note' }, [
+						'First report is free — this is ' + billableQty + ' paid report' + ( 1 === billableQty ? '' : 's' ) + '.',
+					] ) );
+				}
 			}
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedSlugs.indexOf( mod.slug );
@@ -1180,7 +1212,7 @@
 				tier_points: this.pointsIncluded(),
 				template_title: this.state.templateTitle || '',
 				domain: this.state.domain || '',
-				solutions: this.selectedSolutions().map( function ( s ) { var qty = this.moduleQtyFor( s ); return { title: s.title, points: s.points * qty, qty: qty }; }.bind( this ) ),
+				solutions: this.selectedSolutions().map( function ( s ) { var qty = this.moduleQtyFor( s ); return { title: s.title, points: s.points * this.moduleBillableQty( s ), qty: qty, unit: this.unitKindFor( s ) }; }.bind( this ) ),
 				page_url: this.config.pageUrl || window.location.href,
 				hp: hp.value,
 				started_at: this.startedAt,
@@ -1275,10 +1307,12 @@
 
 		this.selectedSolutions().forEach( function ( s ) {
 			var qty = this.moduleQtyFor( s );
+			var billableQty = this.moduleBillableQty( s );
+			var kind = this.unitKindFor( s );
 			var mainNodes = [];
 			if ( s.icon ) mainNodes.push( el( 'img', { class: 'ssw-order-icon', src: s.icon, alt: '' } ) );
-			mainNodes.push( el( 'span', {}, [ s.title + ( qty > 1 ? ' (×' + qty + ' users)' : '' ) ] ) );
-			list.appendChild( row( mainNodes, String( s.points * qty ) ) );
+			mainNodes.push( el( 'span', {}, [ s.title + ( kind && qty !== 1 ? ' (×' + qty + ' ' + this.qtyUnitLabel( kind ) + ')' : '' ) ] ) );
+			list.appendChild( row( mainNodes, String( s.points * billableQty ) ) );
 			rowCount++;
 		}.bind( this ) );
 
