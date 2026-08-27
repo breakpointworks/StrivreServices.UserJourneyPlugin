@@ -96,9 +96,14 @@ class SSW_REST_Submit {
 		$domain_name         = sanitize_text_field( $body['domain_name'] ?? '' );
 		$marketing_title     = sanitize_text_field( $body['marketing_title'] ?? '' );
 		$measure_title       = sanitize_text_field( $body['measure_title'] ?? '' );
+		$measure_license_qty = absint( $body['measure_license_qty'] ?? 0 );
+		$measure_price       = (float) ( $body['measure_price'] ?? 0 );
 		$bespoke_interested  = ! empty( $body['bespoke_interested'] );
 		$bespoke_notes       = sanitize_textarea_field( $body['bespoke_notes'] ?? '' );
 		$enterprise_selected = ! empty( $body['enterprise_selected'] );
+		$pay_annually        = ! empty( $body['pay_annually'] );
+		$monthly_total       = (float) ( $body['monthly_total'] ?? 0 );
+		$annual_total        = (float) ( $body['annual_total'] ?? 0 );
 
 		$bespoke_selected = array();
 		foreach ( (array) ( $body['bespoke_selected'] ?? array() ) as $title ) {
@@ -187,11 +192,16 @@ class SSW_REST_Submit {
 		update_post_meta( $post_id, '_marketing_chosen', $marketing_title );
 		update_post_meta( $post_id, '_licenses', wp_json_encode( $licenses ) );
 		update_post_meta( $post_id, '_measure_chosen', $measure_title );
+		update_post_meta( $post_id, '_measure_license_qty', $measure_license_qty );
+		update_post_meta( $post_id, '_measure_price', $measure_price );
 		update_post_meta( $post_id, '_measure_addons', wp_json_encode( $measure_addons ) );
 		update_post_meta( $post_id, '_bespoke_selected', wp_json_encode( $bespoke_selected ) );
 		update_post_meta( $post_id, '_bespoke_interested', $bespoke_interested ? 1 : 0 );
 		update_post_meta( $post_id, '_bespoke_notes', $bespoke_notes );
 		update_post_meta( $post_id, '_enterprise_selected', $enterprise_selected ? 1 : 0 );
+		update_post_meta( $post_id, '_pay_annually', $pay_annually ? 1 : 0 );
+		update_post_meta( $post_id, '_monthly_total', $monthly_total );
+		update_post_meta( $post_id, '_annual_total', $annual_total );
 		update_post_meta( $post_id, '_phone_country_code', $phone_cc );
 
 		SSW_Mailer::send_notifications(
@@ -213,11 +223,16 @@ class SSW_REST_Submit {
 				'marketing_title'     => $marketing_title,
 				'licenses'            => $licenses,
 				'measure_title'       => $measure_title,
+				'measure_license_qty' => $measure_license_qty,
+				'measure_price'       => $measure_price,
 				'measure_addons'      => $measure_addons,
 				'bespoke_selected'    => $bespoke_selected,
 				'bespoke_interested'  => $bespoke_interested,
 				'bespoke_notes'       => $bespoke_notes,
 				'enterprise_selected' => $enterprise_selected,
+				'pay_annually'        => $pay_annually,
+				'monthly_total'       => $monthly_total,
+				'annual_total'        => $annual_total,
 				'address'          => array(
 					'country' => $country,
 					'line1'   => $address_1,

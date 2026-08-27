@@ -886,7 +886,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 				return array( 'title' => $l['title'], 'price' => (float) $l['price'], 'unitNote' => $l['unit_note'], 'slug' => sanitize_title( $l['title'] ), 'icon' => $l['icon'] ?? '' );
 			}, $c['licenses'] ),
 			'measureTiers' => array_map( function ( $m ) use ( $feature_lines ) {
-				return array( 'title' => $m['title'], 'price' => (float) $m['price'], 'licenseCount' => (int) $m['license_count'], 'addonPrice' => (float) $m['addon_price'], 'features' => $feature_lines( $m['features'] ), 'icon' => $m['icon'] ?? '' );
+				return array( 'title' => $m['title'], 'price' => (float) $m['price'], 'licenseCount' => (int) $m['license_count'], 'addonPrice' => (float) $m['addon_price'], 'features' => $feature_lines( $m['features'] ), 'icon' => $m['icon'] ?? '', 'slug' => sanitize_title( $m['title'] ) );
 			}, $c['measure_tiers'] ),
 			'measureAddons' => array_map( function ( $a ) {
 				return array( 'title' => $a['title'], 'price' => (float) $a['price'], 'licensesIncluded' => (int) $a['licenses_included'], 'slug' => sanitize_title( $a['title'] ), 'icon' => $a['icon'] ?? '' );

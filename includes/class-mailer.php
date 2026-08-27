@@ -77,13 +77,18 @@ class SSW_Mailer {
 				: __( 'No', 'strivre-solutions-wizard' ),
 			'{marketing_tier}'    => $data['marketing_title'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
 			'{licenses}'          => $licenses_lines ? implode( "\n", $licenses_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
-			'{measure_tier}'      => $data['measure_title'] ?: __( 'not selected', 'strivre-solutions-wizard' ),
+			'{measure_tier}'      => $data['measure_title']
+				? $data['measure_title'] . ( ( $data['measure_license_qty'] ?? 0 ) > 0 ? sprintf( ' (%d licenses, $%s/mo)', $data['measure_license_qty'], $data['measure_price'] ?? 0 ) : '' )
+				: __( 'not selected', 'strivre-solutions-wizard' ),
 			'{measure_addons}'    => $measure_addon_lines ? implode( "\n", $measure_addon_lines ) : __( 'none selected', 'strivre-solutions-wizard' ),
 			'{bespoke_selected}'  => ! empty( $data['bespoke_selected'] ) ? implode( "\n", array_map( function ( $t ) { return '- ' . $t; }, $data['bespoke_selected'] ) ) : __( 'none selected', 'strivre-solutions-wizard' ),
 			'{bespoke_interest}'  => ! empty( $data['bespoke_interested'] )
 				? __( 'Yes', 'strivre-solutions-wizard' ) . ( ! empty( $data['bespoke_notes'] ) ? ' — ' . $data['bespoke_notes'] : '' )
 				: __( 'No', 'strivre-solutions-wizard' ),
 			'{enterprise_selected}' => ! empty( $data['enterprise_selected'] ) ? __( 'Yes', 'strivre-solutions-wizard' ) : __( 'No', 'strivre-solutions-wizard' ),
+			'{pay_annually}'      => ! empty( $data['pay_annually'] )
+				? sprintf( __( 'Yes — $%s due upfront (20%% off $%s/mo)', 'strivre-solutions-wizard' ), $data['annual_total'] ?? 0, $data['monthly_total'] ?? 0 )
+				: __( 'No', 'strivre-solutions-wizard' ),
 		);
 	}
 

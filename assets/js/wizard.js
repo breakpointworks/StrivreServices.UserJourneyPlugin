@@ -76,6 +76,8 @@
 			measureTitle: '',
 			selectedMeasureAddonSlugs: [],
 			measureAddonQuantities: {},
+			measureTierLicenseQuantities: {},
+			payAnnually: false,
 			domainWanted: null,
 			domainName: '',
 			selectedBespokeSlugs: [],
@@ -223,6 +225,16 @@
 		return ( QTY_KIND_CONFIG[ kind ] || [ 'units' ] )[ 0 ];
 	};
 
+	// Price badge suffix, matching the "/mo/brand" style already used on
+	// Marketing tiers — "per website/month" and "per user/month" spelled
+	// out on the badge itself instead of a bare "/mo".
+	SSWWizard.prototype.priceSuffixFor = function ( kind ) {
+		if ( 'month' === kind ) return '/mo/website';
+		if ( 'user' === kind ) return '/mo/user';
+		if ( 'license' === kind ) return '/mo/license';
+		return '';
+	};
+
 	// Volume discount straight from the pricing PDF's "Add-On Modules" table
 	// (5 licenses = full price, then discount brackets up to 100).
 	SSWWizard.prototype.measureAddonDiscountRate = function ( qty ) {
@@ -242,6 +254,25 @@
 		var perLicense = addon.price / ( addon.licensesIncluded || 5 );
 		var rate = this.measureAddonDiscountRate( qty );
 		return Math.round( perLicense * qty * ( 1 - rate ) * 100 ) / 100;
+	};
+
+	// Measure Analytics tiers each have their own "Add-On License" rate for
+	// licenses beyond the tier's included count (Forever Free has no
+	// add-on option at all per the PDF — addonPrice is 0 for that row).
+	SSWWizard.prototype.measureTierHasAddonLicenses = function ( tier ) {
+		return !! ( tier && tier.addonPrice > 0 );
+	};
+
+	SSWWizard.prototype.measureTierLicenseQtyFor = function ( tier ) {
+		var included = tier.licenseCount || 1;
+		if ( ! this.measureTierHasAddonLicenses( tier ) ) return included;
+		return this.state.measureTierLicenseQuantities[ tier.slug ] || included;
+	};
+
+	SSWWizard.prototype.measureTierPriceFor = function ( tier ) {
+		var qty = this.measureTierLicenseQtyFor( tier );
+		var extra = Math.max( 0, qty - ( tier.licenseCount || 1 ) );
+		return tier.price + extra * tier.addonPrice;
 	};
 
 	/* -------------------------------------------- single-page builder resolvers */
@@ -286,9 +317,16 @@
 		if ( marketing ) total += marketing.price;
 		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
 		var measure = this.selectedMeasureTier();
-		if ( measure ) total += measure.price;
+		if ( measure ) total += this.measureTierPriceFor( measure );
 		this.selectedMeasureAddons().forEach( function ( a ) { total += this.measureAddonPriceFor( a ); }.bind( this ) );
 		return total;
+	};
+
+	// 20% off per the pricing PDF's Payment Terms, when the visitor opts to
+	// pay upfront for a full year at checkout.
+	SSWWizard.prototype.usdTotalAfterAnnualDiscount = function () {
+		var total = this.usdTotal();
+		return this.state.payAnnually ? Math.round( total * 0.8 * 100 ) / 100 : total;
 	};
 
 	SSWWizard.prototype.currentStepName = function () {
@@ -679,7 +717,7 @@
 			if ( mod.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: mod.icon, alt: '' } ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
 			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * billableQty ) + ' pts' ] ) );
-			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * billableQty ) ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * billableQty ) + this.priceSuffixFor( kind ) ] ) );
 			header.appendChild( badges );
 			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ mod.title ] ) );
@@ -773,7 +811,7 @@
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var licHeader = el( 'div', { class: 'ssw-solution-header', style: lic.icon ? '' : 'justify-content:flex-end;' } );
 			if ( lic.icon ) licHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: lic.icon, alt: '' } ) );
-			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty ) + '/mo' ] ) );
+			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty ) + '/mo/user' ] ) );
 			card.appendChild( licHeader );
 			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
 			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
@@ -804,13 +842,19 @@
 			var card = el( 'div', { class: 'ssw-card ssw-tier-card' + ( selected ? ' selected' : '' ) } );
 			var mHeader = el( 'div', { style: 'display:flex;align-items:center;justify-content:' + ( m.icon ? 'space-between' : 'flex-end' ) + ';margin-bottom:8px;' } );
 			if ( m.icon ) mHeader.appendChild( el( 'img', { class: 'ssw-card-icon', style: 'margin-bottom:0;', src: m.icon, alt: '' } ) );
-			mHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( m.price ) + '/mo' ] ) );
+			mHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( this.measureTierPriceFor( m ) ) + '/mo' ] ) );
 			card.appendChild( mHeader );
 			card.appendChild( el( 'h4', {}, [ m.title ] ) );
 			card.appendChild( el( 'p', { style: 'font-weight:600;' }, [ m.licenseCount + ( 1 === m.licenseCount ? ' license included' : ' licenses included' ) ] ) );
 			var list = el( 'ul', { class: 'ssw-feature-list' } );
 			( m.features || [] ).forEach( function ( f ) { list.appendChild( el( 'li', {}, [ f ] ) ); } );
 			card.appendChild( list );
+			if ( selected && this.measureTierHasAddonLicenses( m ) ) {
+				card.appendChild( this.renderQuantityField( 'measureTierLicenseQuantities', m.slug, this.measureTierLicenseQtyFor( m ), 'licenses', m.licenseCount, 100 ) );
+				card.appendChild( el( 'p', { class: 'ssw-qty-note' }, [
+					m.licenseCount + ' included, extra licenses billed at ' + money( m.addonPrice ) + '/license/month.',
+				] ) );
+			}
 			if ( selected && locked ) card.appendChild( el( 'div', { class: 'ssw-card-locked-note' }, [ 'Included in your Enterprise Plan' ] ) );
 			card.addEventListener( 'click', function () {
 				if ( this.state.enterpriseSelected ) return;
@@ -1169,6 +1213,20 @@
 		var hp = el( 'input', { class: 'ssw-hp', type: 'text', name: 'hp', tabindex: '-1', autocomplete: 'off' } );
 		form.appendChild( hp );
 
+		if ( this.isSinglePage() ) {
+			var annualWrap = el( 'label', { class: 'ssw-annual-toggle' } );
+			var annualCb = el( 'input', { type: 'checkbox' } );
+			annualCb.checked = !! this.state.payAnnually;
+			annualCb.addEventListener( 'change', function () {
+				this.state.payAnnually = annualCb.checked;
+				this.persist();
+				this.render();
+			}.bind( this ) );
+			annualWrap.appendChild( annualCb );
+			annualWrap.appendChild( el( 'span', {}, [ 'Pay upfront for 1 year (20% off)' ] ) );
+			form.appendChild( annualWrap );
+		}
+
 		var errorBox = el( 'div', { class: 'ssw-form-error' } );
 
 		var nav = el( 'div', { class: 'ssw-nav' } );
@@ -1225,11 +1283,16 @@
 				marketing_title: this.state.marketingTitle || '',
 				licenses: this.selectedLicenses().map( function ( l ) { var qty = this.licenseQtyFor( l ); return { title: l.title, price: l.price * qty, qty: qty }; }.bind( this ) ),
 				measure_title: this.state.measureTitle || '',
+				measure_license_qty: this.selectedMeasureTier() ? this.measureTierLicenseQtyFor( this.selectedMeasureTier() ) : 0,
+				measure_price: this.selectedMeasureTier() ? this.measureTierPriceFor( this.selectedMeasureTier() ) : 0,
 				measure_addons: this.selectedMeasureAddons().map( function ( a ) { return { title: a.title, price: this.measureAddonPriceFor( a ), qty: this.measureAddonQtyFor( a ) }; }.bind( this ) ),
 				bespoke_selected: this.selectedBespoke().map( function ( b ) { return b.title; } ),
 				bespoke_interested: !! this.state.bespokeInterested,
 				bespoke_notes: this.state.bespokeNotes || '',
 				enterprise_selected: !! this.state.enterpriseSelected,
+				pay_annually: !! this.state.payAnnually,
+				monthly_total: this.usdTotal(),
+				annual_total: this.state.payAnnually ? Math.round( this.usdTotalAfterAnnualDiscount() * 12 * 100 ) / 100 : 0,
 				phone_country_code: phoneCode ? phoneCode.value : '',
 			};
 
@@ -1332,7 +1395,9 @@
 			}.bind( this ) );
 			var measure = this.selectedMeasureTier();
 			if ( measure ) {
-				list.appendChild( row( [ el( 'span', {}, [ 'Measure Analytics: ' + measure.title ] ) ], money( measure.price ) + '/mo' ) );
+				var mqty = this.measureTierLicenseQtyFor( measure );
+				var mextra = mqty > measure.licenseCount ? ' (' + mqty + ' licenses)' : '';
+				list.appendChild( row( [ el( 'span', {}, [ 'Measure Analytics: ' + measure.title + mextra ] ) ], money( this.measureTierPriceFor( measure ) ) + '/mo' ) );
 				rowCount++;
 			}
 			this.selectedMeasureAddons().forEach( function ( a ) {
@@ -1389,6 +1454,14 @@
 					el( 'span', {}, [ 'Monthly total (excl. Website Package)' ] ),
 					el( 'span', {}, [ money( usd ) + '/mo' ] ),
 				] ) );
+				if ( this.state.payAnnually ) {
+					var discounted = this.usdTotalAfterAnnualDiscount();
+					box.appendChild( row( [ el( 'span', {}, [ '20% annual prepay discount' ] ) ], '−' + money( usd - discounted ) + '/mo' ) );
+					box.appendChild( el( 'div', { class: 'ssw-order-total' }, [
+						el( 'span', {}, [ 'Due today (12 months upfront)' ] ),
+						el( 'span', {}, [ money( discounted * 12 ) ] ),
+					] ) );
+				}
 			}
 		}
 

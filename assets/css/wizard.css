@@ -370,6 +370,12 @@
 }
 .ssw-bespoke-interest { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
 .ssw-bespoke-interest input { width: 16px; height: 16px; accent-color: var(--ssw-secondary); }
+.ssw-annual-toggle {
+	display: flex; align-items: center; gap: 10px; margin: 20px 0; padding: 14px 16px;
+	border-radius: 12px; background: var(--ssw-selected-tint); font-size: 14px; font-weight: 600;
+	color: var(--ssw-secondary); cursor: pointer;
+}
+.ssw-annual-toggle input { width: 16px; height: 16px; accent-color: var(--ssw-secondary); flex-shrink: 0; }
 .ssw-bespoke-notes {
 	width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 10px;
 	border: 1.5px solid #E2E5EA; background: #FAFBFC; font: inherit; font-size: 14px; color: var(--ssw-text); resize: vertical;
