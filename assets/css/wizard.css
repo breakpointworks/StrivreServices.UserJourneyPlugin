@@ -383,6 +383,7 @@
 }
 .ssw-enterprise-banner h4 { margin: 0 0 6px; color: #fff; }
 .ssw-enterprise-banner p { margin: 0; color: rgba(255,255,255,.75); font-size: 14px; max-width: 46ch; }
+.ssw-enterprise-banner p.ssw-enterprise-note { margin-top: 8px; color: rgba(255,255,255,.55); font-size: 12px; max-width: 52ch; line-height: 1.5; }
 .ssw-enterprise-banner .ssw-btn { background: #fff; color: var(--ssw-primary); border-color: #fff; flex-shrink: 0; }
 .ssw-enterprise-banner .ssw-btn:hover:not([disabled]) { background: transparent; color: #fff; border-color: #fff; }
 .ssw-enterprise-banner .ssw-btn.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.5); }

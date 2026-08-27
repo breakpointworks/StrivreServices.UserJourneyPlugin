@@ -864,7 +864,7 @@
 		}.bind( this ) );
 		wrap.appendChild( addonGrid );
 		wrap.appendChild( el( 'p', { class: 'ssw-points-disclaimer' }, [
-			'5 licenses is full price; volume discounts apply automatically at 6+ (10% off), 11+ (15% off), 26+ (20% off), and 51+ (25% off). Need more than 100? Contact us for custom pricing.',
+			'5 licenses is full price; volume discounts apply automatically at 6+ (10% off), 11+ (15% off), 26+ (20% off), and 51+ (25% off). Need more than 100? Contact us for custom pricing. Add-On Modules are subject to a one-time integration fee of up to US$1,000, depending on the integration requirements.',
 		] ) );
 		return wrap;
 	};
@@ -934,6 +934,9 @@
 		var text = el( 'div', {} );
 		text.appendChild( el( 'h4', {}, [ ent.title ] ) );
 		text.appendChild( el( 'p', {}, [ ent.priceLabel + ' — includes ' + ent.tierTitle + ' Website Package, ' + ent.marketingTitle + ' Marketing, and ' + ent.measureTitle + ' Measure Analytics.' ] ) );
+		text.appendChild( el( 'p', { class: 'ssw-enterprise-note' }, [
+			'With a dedicated project manager. May cost extra for some features that are user-based. Subject to a one-time integration fee of up to US$1,000, depending on the integration requirements.',
+		] ) );
 		textWrap.appendChild( text );
 		banner.appendChild( textWrap );
 		var btn = el( 'button', { type: 'button', class: 'ssw-btn' + ( this.state.enterpriseSelected ? ' ghost' : '' ) }, [ this.state.enterpriseSelected ? 'Remove bundle' : 'Select Enterprise' ] );
