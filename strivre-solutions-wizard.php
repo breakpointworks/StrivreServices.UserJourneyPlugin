@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Strivre Solutions Wizard
  * Description: Elementor widget for Strivre Services — a multi-step configurator (package tier, website template, domain search, solutions/points selection, checkout) for the Solutions page, plus a single-page "Build Your Business" catalog builder mode with a global pricing catalog. Emails staff and the customer on submission.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Author: Paul John Labesores | Strivre Services
  * Text Domain: strivre-solutions-wizard
  * Requires PHP: 7.4
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SSW_VERSION', '0.2.0' );
+define( 'SSW_VERSION', '0.3.0' );
 // Highest Elementor version this plugin has actually been tested against.
 // Only the major.minor part is compared — an Elementor patch release
 // (4.2.3 -> 4.2.4) is assumed compatible, a minor/major bump (4.2.x -> 4.3.0)
