@@ -108,6 +108,23 @@ class SSW_Mailer {
 		return array_values( $emails );
 	}
 
+	/**
+	 * Every outgoing email funnels through here — this is the one place a
+	 * future email API integration needs to touch. Two extension points,
+	 * so that integration can live in its own mu-plugin/snippet instead of
+	 * editing this file:
+	 *
+	 * - `ssw_mailer_message` (filter) — adjust to/subject/body/headers
+	 *   (e.g. add a provider's custom headers or a tracking param) before
+	 *   send. Return the same shape: array( 'to', 'subject', 'body',
+	 *   'headers' ).
+	 * - `ssw_mailer_send` (filter, default null) — return anything other
+	 *   than null to fully replace wp_mail() with a direct API call (e.g.
+	 *   SendGrid's/Postmark's HTTP API instead of SMTP). Most providers
+	 *   don't need this — installing their official plugin (SendGrid,
+	 *   Mailgun, Postmark, WP Mail SMTP, SES, etc.) reroutes wp_mail()
+	 *   itself, so nothing here needs to change at all.
+	 */
 	private static function send( $to, $subject, $body, $reply_to ) {
 		if ( empty( $to ) ) {
 			return;
@@ -123,6 +140,18 @@ class SSW_Mailer {
 			$headers[] = 'Reply-To: ' . $reply_to;
 		}
 
-		wp_mail( $to, $subject, $body, $headers );
+		$message = apply_filters( 'ssw_mailer_message', array(
+			'to'      => $to,
+			'subject' => $subject,
+			'body'    => $body,
+			'headers' => $headers,
+		) );
+
+		$handled = apply_filters( 'ssw_mailer_send', null, $message );
+		if ( null !== $handled ) {
+			return;
+		}
+
+		wp_mail( $message['to'], $message['subject'], $message['body'], $message['headers'] );
 	}
 }
