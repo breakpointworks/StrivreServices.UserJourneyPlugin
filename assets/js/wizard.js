@@ -595,14 +595,14 @@
 
 		wrap.appendChild( this.renderChoicesPackageSection() );
 		if ( this.config.enableChoicesTemplates ) wrap.appendChild( this.renderChoicesTemplateSection() );
-		wrap.appendChild( this.renderChoicesDomainSection() );
-		wrap.appendChild( this.renderChoicesModulesSection() );
-		wrap.appendChild( this.renderChoicesMarketingSection() );
-		wrap.appendChild( this.renderChoicesLicensesSection() );
+		if ( this.config.enableChoicesDomain !== false ) wrap.appendChild( this.renderChoicesDomainSection() );
+		if ( this.config.enableChoicesModules !== false ) wrap.appendChild( this.renderChoicesModulesSection() );
+		if ( this.config.enableChoicesMarketing !== false ) wrap.appendChild( this.renderChoicesMarketingSection() );
+		if ( this.config.enableChoicesLicenses !== false ) wrap.appendChild( this.renderChoicesLicensesSection() );
 		if ( this.config.enableChoicesMeasure ) wrap.appendChild( this.renderChoicesMeasureSection() );
-		wrap.appendChild( this.renderChoicesMeasureAddonsSection() );
-		wrap.appendChild( this.renderChoicesBespokeSection() );
-		wrap.appendChild( this.renderChoicesEnterpriseSection() );
+		if ( this.config.enableChoicesMeasureAddons !== false ) wrap.appendChild( this.renderChoicesMeasureAddonsSection() );
+		if ( this.config.enableChoicesBespoke !== false ) wrap.appendChild( this.renderChoicesBespokeSection() );
+		if ( this.config.enableChoicesEnterprise !== false ) wrap.appendChild( this.renderChoicesEnterpriseSection() );
 
 		wrap.appendChild( this.renderNav() );
 		return wrap;

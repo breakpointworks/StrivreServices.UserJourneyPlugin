@@ -48,6 +48,7 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 		$this->register_template_gallery_section();
 		$this->register_domain_section();
 		$this->register_solutions_section();
+		$this->register_choices_visibility_section();
 		$this->register_single_page_section();
 		$this->register_checkout_section();
 		$this->register_colors_section();
@@ -494,37 +495,60 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 	 * heading is still reasonably page-specific even when the underlying
 	 * price list isn't, so those stay editable per widget instance.
 	 */
-	private function register_single_page_section() {
+	/**
+	 * A dedicated, clearly-labeled section for the Choices page's show/hide
+	 * switches — previously these lived inside "Single-Page Builder
+	 * Headings" where they were easy to miss since nothing in that section's
+	 * name suggested it also controlled visibility. Every switch here
+	 * defaults to "On" (matching the section's pre-existing behavior)
+	 * except Website Template and Measure Analytics, which stay off by
+	 * default per earlier client feedback.
+	 */
+	private function register_choices_visibility_section() {
 		$this->start_controls_section(
-			'section_single_page',
+			'section_choices_visibility',
 			array(
-				'label'     => __( 'Single-Page Builder Headings', 'strivre-solutions-wizard' ),
+				'label'     => __( 'Choices Page — Show/Hide Sections', 'strivre-solutions-wizard' ),
 				'tab'       => Controls_Manager::TAB_CONTENT,
 				'condition' => array( 'builder_mode' => 'single_page' ),
 			)
 		);
 
-		$this->add_control(
-			'enable_choices_templates',
-			array(
-				'label'       => __( 'Show Website Template section', 'strivre-solutions-wizard' ),
-				'type'        => Controls_Manager::SWITCHER,
-				'default'     => '',
-				'label_on'    => __( 'On', 'strivre-solutions-wizard' ),
-				'label_off'   => __( 'Off', 'strivre-solutions-wizard' ),
-				'description' => __( 'Off by default for this mode. Turn on to add the template gallery (configured below in "Website Templates") to the Choices page.', 'strivre-solutions-wizard' ),
-			)
+		$toggles = array(
+			'enable_choices_templates' => array( 'Website Template', '', 'Off by default. Turn on to add the template gallery (configured below in "Website Templates") to the Choices page.' ),
+			'enable_choices_domain'    => array( 'Domain Question', 'yes', '"Do you need to buy a domain?"' ),
+			'enable_choices_modules'   => array( 'Website Modules', 'yes', '' ),
+			'enable_choices_marketing' => array( 'Marketing', 'yes', '' ),
+			'enable_choices_licenses'  => array( 'Licenses', 'yes', '' ),
+			'enable_choices_measure'   => array( 'Measure Analytics (tiers)', '', 'Off by default. The Enterprise bundle still includes it even when hidden here.' ),
+			'enable_choices_measure_addons' => array( 'Report Add-ons', 'yes', 'Shown independently of the Measure Analytics tiers toggle above.' ),
+			'enable_choices_bespoke'   => array( 'Bespoke Development', 'yes', '' ),
+			'enable_choices_enterprise' => array( 'Enterprise Bundle', 'yes', '' ),
 		);
+		foreach ( $toggles as $key => list( $label, $default, $description ) ) {
+			$args = array(
+				'label'     => sprintf( __( 'Show %s section', 'strivre-solutions-wizard' ), $label ),
+				'type'      => Controls_Manager::SWITCHER,
+				'default'   => $default,
+				'label_on'  => __( 'On', 'strivre-solutions-wizard' ),
+				'label_off' => __( 'Off', 'strivre-solutions-wizard' ),
+			);
+			if ( $description ) {
+				$args['description'] = __( $description, 'strivre-solutions-wizard' );
+			}
+			$this->add_control( $key, $args );
+		}
 
-		$this->add_control(
-			'enable_choices_measure',
+		$this->end_controls_section();
+	}
+
+	private function register_single_page_section() {
+		$this->start_controls_section(
+			'section_single_page',
 			array(
-				'label'       => __( 'Show Measure Analytics section', 'strivre-solutions-wizard' ),
-				'type'        => Controls_Manager::SWITCHER,
-				'default'     => '',
-				'label_on'    => __( 'On', 'strivre-solutions-wizard' ),
-				'label_off'   => __( 'Off', 'strivre-solutions-wizard' ),
-				'description' => __( 'Off by default. Turn on to add the Measure Analytics tiers and report add-ons (configured in the global Catalog settings) to the Choices page.', 'strivre-solutions-wizard' ),
+				'label'     => __( 'Choices Page — Section Headings', 'strivre-solutions-wizard' ),
+				'tab'       => Controls_Manager::TAB_CONTENT,
+				'condition' => array( 'builder_mode' => 'single_page' ),
 			)
 		);
 
@@ -906,6 +930,12 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 
 		$enable_choices_templates = 'yes' === ( $settings['enable_choices_templates'] ?? '' );
 		$enable_choices_measure   = 'yes' === ( $settings['enable_choices_measure'] ?? '' );
+		// The rest default to "on" — the ?? fallback only matters if $settings
+		// ever comes from somewhere that skipped Elementor's settings model
+		// (which already hydrates missing keys with each control's default).
+		$visibility_toggle = function ( $key ) use ( $settings ) {
+			return 'yes' === ( $settings[ $key ] ?? 'yes' );
+		};
 
 		$config = array(
 			'restUrl'     => esc_url_raw( rest_url( 'strivre-solutions/v1' ) ),
@@ -914,6 +944,13 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			'catalog'     => $catalog,
 			'enableChoicesTemplates' => $enable_choices_templates,
 			'enableChoicesMeasure'   => $enable_choices_measure,
+			'enableChoicesDomain'    => $visibility_toggle( 'enable_choices_domain' ),
+			'enableChoicesModules'   => $visibility_toggle( 'enable_choices_modules' ),
+			'enableChoicesMarketing' => $visibility_toggle( 'enable_choices_marketing' ),
+			'enableChoicesLicenses'  => $visibility_toggle( 'enable_choices_licenses' ),
+			'enableChoicesMeasureAddons' => $visibility_toggle( 'enable_choices_measure_addons' ),
+			'enableChoicesBespoke'   => $visibility_toggle( 'enable_choices_bespoke' ),
+			'enableChoicesEnterprise' => $visibility_toggle( 'enable_choices_enterprise' ),
 			'templates'   => $enable_choices_templates ? $this->build_templates_config( $settings ) : array(),
 			'templateHeading'    => $settings['template_step_heading'] ?? '',
 			'templateSubheading' => $settings['template_step_subheading'] ?? '',
