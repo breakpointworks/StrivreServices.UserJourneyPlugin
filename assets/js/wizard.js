@@ -118,6 +118,7 @@
 			// harmless/unused in classic mode.
 			marketingTitle: '',
 			moduleQuantities: {},
+			moduleWebsiteQuantities: {},
 			selectedLicenseSlugs: [],
 			licenseQuantities: {},
 			measureTitle: '',
@@ -220,7 +221,7 @@
 
 	SSWWizard.prototype.pointsUsed = function () {
 		var total = 0;
-		this.selectedSolutions().forEach( function ( s ) { total += s.points * this.moduleBillableQty( s ); }.bind( this ) );
+		this.selectedSolutions().forEach( function ( s ) { total += s.points * this.moduleTotalMultiplier( s ); }.bind( this ) );
 		return total;
 	};
 
@@ -259,6 +260,26 @@
 	SSWWizard.prototype.moduleBillableQty = function ( mod ) {
 		var qty = this.moduleQtyFor( mod );
 		return 'report' === this.unitKindFor( mod ) ? Math.max( 0, qty - 1 ) : qty;
+	};
+
+	// "Per website/month" and "Per user/month" modules are billed per
+	// website too — a second dropdown, independent of the months/users
+	// one, capped at 20. Report-kind modules don't get this second
+	// dimension (a diagnostic report isn't naturally "×N websites").
+	SSWWizard.prototype.moduleHasWebsiteQty = function ( mod ) {
+		var kind = this.unitKindFor( mod );
+		return 'month' === kind || 'user' === kind;
+	};
+
+	SSWWizard.prototype.moduleWebsiteQtyFor = function ( mod ) {
+		if ( ! this.moduleHasWebsiteQty( mod ) ) return 1;
+		return this.state.moduleWebsiteQuantities[ mod.slug ] || 1;
+	};
+
+	// The single multiplier to use everywhere a module's price/points are
+	// totaled — billable months/users/reports times the website count.
+	SSWWizard.prototype.moduleTotalMultiplier = function ( mod ) {
+		return this.moduleBillableQty( mod ) * this.moduleWebsiteQtyFor( mod );
 	};
 
 	SSWWizard.prototype.licenseQtyFor = function ( lic ) {
@@ -364,7 +385,7 @@
 		var total = 0;
 		var tier = this.selectedTier();
 		if ( tier ) total += tier.price;
-		this.selectedSolutions().forEach( function ( s ) { total += ( s.price || 0 ) * this.moduleBillableQty( s ); }.bind( this ) );
+		this.selectedSolutions().forEach( function ( s ) { total += ( s.price || 0 ) * this.moduleTotalMultiplier( s ); }.bind( this ) );
 		var marketing = this.selectedMarketing();
 		if ( marketing ) total += marketing.price;
 		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
@@ -757,17 +778,22 @@
 			var kind = this.unitKindFor( mod );
 			var qty = selected ? this.moduleQtyFor( mod ) : 1;
 			var billableQty = selected ? this.moduleBillableQty( mod ) : 1;
+			var websiteQty = selected ? this.moduleWebsiteQtyFor( mod ) : 1;
+			var totalMultiplier = billableQty * websiteQty;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var header = el( 'div', { class: 'ssw-solution-header', style: mod.icon ? '' : 'justify-content:flex-end;' } );
 			if ( mod.icon ) header.appendChild( el( 'img', { class: 'ssw-card-icon', src: mod.icon, alt: '' } ) );
 			var badges = el( 'div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;' } );
-			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * billableQty ) + ' pts' ] ) );
-			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * billableQty ) + this.priceSuffixFor( kind ) ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-points-badge' }, [ ( mod.points * totalMultiplier ) + ' pts' ] ) );
+			badges.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( mod.price * totalMultiplier ) + this.priceSuffixFor( kind ) ] ) );
 			header.appendChild( badges );
 			card.appendChild( header );
 			card.appendChild( el( 'h4', {}, [ mod.title ] ) );
 			if ( mod.unitNote ) card.appendChild( el( 'p', {}, [ mod.unitNote ] ) );
 			if ( selected && kind ) {
+				if ( this.moduleHasWebsiteQty( mod ) ) {
+					card.appendChild( this.renderQuantityField( 'moduleWebsiteQuantities', mod.slug, websiteQty, 'websites', 1, 20 ) );
+				}
 				var cfg = QTY_KIND_CONFIG[ kind ];
 				card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, cfg[ 0 ], cfg[ 1 ], cfg[ 2 ] ) );
 				if ( 'report' === kind ) {
@@ -779,7 +805,11 @@
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedSlugs.indexOf( mod.slug );
 				if ( idx === -1 ) this.state.selectedSlugs.push( mod.slug );
-				else { this.state.selectedSlugs.splice( idx, 1 ); delete this.state.moduleQuantities[ mod.slug ]; }
+				else {
+					this.state.selectedSlugs.splice( idx, 1 );
+					delete this.state.moduleQuantities[ mod.slug ];
+					delete this.state.moduleWebsiteQuantities[ mod.slug ];
+				}
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -1311,7 +1341,7 @@
 				tier_points: this.pointsIncluded(),
 				template_title: this.state.templateTitle || '',
 				domain: this.state.domain || '',
-				solutions: this.selectedSolutions().map( function ( s ) { var qty = this.moduleQtyFor( s ); return { title: s.title, points: s.points * this.moduleBillableQty( s ), qty: qty, unit: this.unitKindFor( s ) }; }.bind( this ) ),
+				solutions: this.selectedSolutions().map( function ( s ) { return { title: s.title, points: s.points * this.moduleTotalMultiplier( s ), qty: this.moduleQtyFor( s ), websiteQty: this.moduleWebsiteQtyFor( s ), unit: this.unitKindFor( s ) }; }.bind( this ) ),
 				page_url: this.config.pageUrl || window.location.href,
 				hp: hp.value,
 				started_at: this.startedAt,
@@ -1409,12 +1439,15 @@
 
 		this.selectedSolutions().forEach( function ( s ) {
 			var qty = this.moduleQtyFor( s );
-			var billableQty = this.moduleBillableQty( s );
+			var websiteQty = this.moduleWebsiteQtyFor( s );
 			var kind = this.unitKindFor( s );
+			var parts = [];
+			if ( websiteQty > 1 ) parts.push( websiteQty + ' websites' );
+			if ( kind && qty > 1 ) parts.push( qty + ' ' + this.qtyUnitLabel( kind ) );
 			var mainNodes = [];
 			if ( s.icon ) mainNodes.push( el( 'img', { class: 'ssw-order-icon', src: s.icon, alt: '' } ) );
-			mainNodes.push( el( 'span', {}, [ s.title + ( kind && qty !== 1 ? ' (×' + qty + ' ' + this.qtyUnitLabel( kind ) + ')' : '' ) ] ) );
-			list.appendChild( row( mainNodes, String( s.points * billableQty ) ) );
+			mainNodes.push( el( 'span', {}, [ s.title + ( parts.length ? ' (×' + parts.join( ' × ' ) + ')' : '' ) ] ) );
+			list.appendChild( row( mainNodes, String( s.points * this.moduleTotalMultiplier( s ) ) ) );
 			rowCount++;
 		}.bind( this ) );
 

@@ -146,10 +146,11 @@ class SSW_REST_Submit {
 			$points_used += $points;
 			$unit = sanitize_key( $item['unit'] ?? '' );
 			$solutions[] = array(
-				'title'  => sanitize_text_field( $item['title'] ),
-				'points' => $points,
-				'qty'    => max( 1, absint( $item['qty'] ?? 1 ) ),
-				'unit'   => in_array( $unit, array( 'user', 'license', 'month', 'report' ), true ) ? $unit : '',
+				'title'      => sanitize_text_field( $item['title'] ),
+				'points'     => $points,
+				'qty'        => max( 1, absint( $item['qty'] ?? 1 ) ),
+				'websiteQty' => max( 1, absint( $item['websiteQty'] ?? 1 ) ),
+				'unit'       => in_array( $unit, array( 'user', 'license', 'month', 'report' ), true ) ? $unit : '',
 			);
 		}
 		$points_shortfall = max( 0, $points_used - $points_included );

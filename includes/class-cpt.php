@@ -323,9 +323,9 @@ class SSW_CPT {
 		$solutions = json_decode( get_post_meta( $post->ID, '_solutions', true ), true );
 		echo '<h3 style="margin-top:20px;">' . esc_html__( 'Selected Solutions', 'strivre-solutions-wizard' ) . '</h3>';
 		if ( $solutions ) {
-			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Qty', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
+			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Solution', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Websites', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Qty', 'strivre-solutions-wizard' ) . '</th><th>' . esc_html__( 'Points', 'strivre-solutions-wizard' ) . '</th></tr></thead><tbody>';
 			foreach ( $solutions as $item ) {
-				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['qty'] ?? '1' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
+				echo '<tr><td>' . esc_html( $item['title'] ?? '' ) . '</td><td>' . esc_html( $item['websiteQty'] ?? '1' ) . '</td><td>' . esc_html( $item['qty'] ?? '1' ) . '</td><td>' . esc_html( $item['points'] ?? '' ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
 		} else {

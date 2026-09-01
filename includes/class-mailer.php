@@ -34,9 +34,18 @@ class SSW_Mailer {
 		$unit_labels     = array( 'user' => 'users', 'license' => 'licenses', 'month' => 'months', 'report' => 'reports' );
 		$solutions_lines = array();
 		foreach ( $data['solutions'] ?? array() as $item ) {
-			$qty  = (int) ( $item['qty'] ?? 1 );
-			$unit = $unit_labels[ $item['unit'] ?? '' ] ?? 'units';
-			$solutions_lines[] = sprintf( '- %s%s (%s pts)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} {$unit})" : '', $item['points'] ?? 0 );
+			$qty        = (int) ( $item['qty'] ?? 1 );
+			$website_qty = (int) ( $item['websiteQty'] ?? 1 );
+			$unit       = $unit_labels[ $item['unit'] ?? '' ] ?? 'units';
+			$parts = array();
+			if ( $website_qty > 1 ) {
+				$parts[] = "{$website_qty} websites";
+			}
+			if ( $qty > 1 ) {
+				$parts[] = "{$qty} {$unit}";
+			}
+			$suffix = $parts ? ' (×' . implode( ' × ', $parts ) . ')' : '';
+			$solutions_lines[] = sprintf( '- %s%s (%s pts)', $item['title'] ?? '', $suffix, $item['points'] ?? 0 );
 		}
 
 		$addr       = $data['address'] ?? array();
