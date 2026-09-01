@@ -266,30 +266,22 @@ class SSW_Widget_Solutions_Wizard extends Widget_Base {
 			array(
 				'label' => __( 'Website Templates', 'strivre-solutions-wizard' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
-				// Shown for classic mode via its own step toggle, OR for the
-				// single-page builder via its separate "off by default" toggle
-				// (register_single_page_section) — the two modes don't share
-				// one switch since single-page should start hidden even
-				// though classic's default is on.
-				'conditions' => array(
-					'relation' => 'or',
-					'terms'    => array(
-						array(
-							'relation' => 'and',
-							'terms'    => array(
-								array( 'name' => 'builder_mode', 'operator' => '==', 'value' => 'classic' ),
-								array( 'name' => 'enable_template_step', 'operator' => '==', 'value' => 'yes' ),
-							),
-						),
-						array(
-							'relation' => 'and',
-							'terms'    => array(
-								array( 'name' => 'builder_mode', 'operator' => '==', 'value' => 'single_page' ),
-								array( 'name' => 'enable_choices_templates', 'operator' => '==', 'value' => 'yes' ),
-							),
-						),
-					),
-				),
+				// Deliberately NOT conditioned on either mode's "show this
+				// step/section" toggle — those toggles control whether
+				// visitors see the template gallery, not whether you can
+				// edit it. Gating this section on them meant the content
+				// (and this section itself) was invisible in the editor
+				// whenever the toggle defaulted to off, with no way to find
+				// or prepare it ahead of time.
+			)
+		);
+
+		$this->add_control(
+			'templates_visibility_note',
+			array(
+				'type' => Controls_Manager::RAW_HTML,
+				'raw'  => __( 'This gallery is shared by both modes. It only appears to visitors once the relevant toggle is on — classic mode\'s own step toggle further down, or single-page mode\'s "Show Website Template section" switch in "Choices Page — Show/Hide Sections".', 'strivre-solutions-wizard' ),
+				'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
 			)
 		);
 
