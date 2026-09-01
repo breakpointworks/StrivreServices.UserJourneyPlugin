@@ -24,14 +24,61 @@
 
 	// Common calling codes for the checkout phone field — not exhaustive,
 	// covers the markets Strivre is realistically getting leads from.
+	// A near-complete ITU calling-code list (not just the handful of markets
+	// Strivre was seeing leads from) — sorted by calling code so nearby
+	// dial codes group together, with the country/territory name spelled
+	// out (not just an ISO2 guess) so visitors can actually find theirs.
 	var PHONE_CODES = [
-		[ '+1', 'US/CA +1' ], [ '+44', 'UK +44' ], [ '+61', 'AU +61' ], [ '+64', 'NZ +64' ],
-		[ '+63', 'PH +63' ], [ '+65', 'SG +65' ], [ '+60', 'MY +60' ], [ '+66', 'TH +66' ],
-		[ '+62', 'ID +62' ], [ '+91', 'IN +91' ], [ '+971', 'AE +971' ], [ '+966', 'SA +966' ],
-		[ '+27', 'ZA +27' ], [ '+353', 'IE +353' ], [ '+49', 'DE +49' ], [ '+33', 'FR +33' ],
-		[ '+34', 'ES +34' ], [ '+39', 'IT +39' ], [ '+31', 'NL +31' ], [ '+46', 'SE +46' ],
-		[ '+81', 'JP +81' ], [ '+82', 'KR +82' ], [ '+86', 'CN +86' ], [ '+852', 'HK +852' ],
-		[ '+886', 'TW +886' ], [ '+52', 'MX +52' ], [ '+55', 'BR +55' ],
+		[ '+1', 'US/Canada +1' ],
+		[ '+7', 'Russia/Kazakhstan +7' ],
+		[ '+20', 'Egypt +20' ], [ '+27', 'South Africa +27' ],
+		[ '+30', 'Greece +30' ], [ '+31', 'Netherlands +31' ], [ '+32', 'Belgium +32' ], [ '+33', 'France +33' ],
+		[ '+34', 'Spain +34' ], [ '+36', 'Hungary +36' ], [ '+39', 'Italy +39' ], [ '+40', 'Romania +40' ],
+		[ '+41', 'Switzerland +41' ], [ '+43', 'Austria +43' ], [ '+44', 'United Kingdom +44' ], [ '+45', 'Denmark +45' ],
+		[ '+46', 'Sweden +46' ], [ '+47', 'Norway +47' ], [ '+48', 'Poland +48' ], [ '+49', 'Germany +49' ],
+		[ '+51', 'Peru +51' ], [ '+52', 'Mexico +52' ], [ '+53', 'Cuba +53' ], [ '+54', 'Argentina +54' ],
+		[ '+55', 'Brazil +55' ], [ '+56', 'Chile +56' ], [ '+57', 'Colombia +57' ], [ '+58', 'Venezuela +58' ],
+		[ '+60', 'Malaysia +60' ], [ '+61', 'Australia +61' ], [ '+62', 'Indonesia +62' ], [ '+63', 'Philippines +63' ],
+		[ '+64', 'New Zealand +64' ], [ '+65', 'Singapore +65' ], [ '+66', 'Thailand +66' ],
+		[ '+81', 'Japan +81' ], [ '+82', 'South Korea +82' ], [ '+84', 'Vietnam +84' ], [ '+86', 'China +86' ],
+		[ '+90', 'Turkey +90' ], [ '+91', 'India +91' ], [ '+92', 'Pakistan +92' ], [ '+93', 'Afghanistan +93' ],
+		[ '+94', 'Sri Lanka +94' ], [ '+95', 'Myanmar +95' ], [ '+98', 'Iran +98' ],
+		[ '+211', 'South Sudan +211' ], [ '+212', 'Morocco +212' ], [ '+213', 'Algeria +213' ], [ '+216', 'Tunisia +216' ],
+		[ '+218', 'Libya +218' ], [ '+220', 'Gambia +220' ], [ '+221', 'Senegal +221' ], [ '+222', 'Mauritania +222' ],
+		[ '+223', 'Mali +223' ], [ '+224', 'Guinea +224' ], [ '+225', "Cote d'Ivoire +225" ], [ '+226', 'Burkina Faso +226' ],
+		[ '+227', 'Niger +227' ], [ '+228', 'Togo +228' ], [ '+229', 'Benin +229' ], [ '+230', 'Mauritius +230' ],
+		[ '+231', 'Liberia +231' ], [ '+232', 'Sierra Leone +232' ], [ '+233', 'Ghana +233' ], [ '+234', 'Nigeria +234' ],
+		[ '+235', 'Chad +235' ], [ '+236', 'Central African Republic +236' ], [ '+237', 'Cameroon +237' ], [ '+238', 'Cabo Verde +238' ],
+		[ '+239', 'Sao Tome and Principe +239' ], [ '+240', 'Equatorial Guinea +240' ], [ '+241', 'Gabon +241' ], [ '+242', 'Congo (Brazzaville) +242' ],
+		[ '+243', 'DR Congo +243' ], [ '+244', 'Angola +244' ], [ '+245', 'Guinea-Bissau +245' ], [ '+248', 'Seychelles +248' ],
+		[ '+249', 'Sudan +249' ], [ '+250', 'Rwanda +250' ], [ '+251', 'Ethiopia +251' ], [ '+252', 'Somalia +252' ],
+		[ '+253', 'Djibouti +253' ], [ '+254', 'Kenya +254' ], [ '+255', 'Tanzania +255' ], [ '+256', 'Uganda +256' ],
+		[ '+257', 'Burundi +257' ], [ '+258', 'Mozambique +258' ], [ '+260', 'Zambia +260' ], [ '+261', 'Madagascar +261' ],
+		[ '+263', 'Zimbabwe +263' ], [ '+264', 'Namibia +264' ], [ '+265', 'Malawi +265' ], [ '+266', 'Lesotho +266' ],
+		[ '+267', 'Botswana +267' ], [ '+268', 'Eswatini +268' ], [ '+351', 'Portugal +351' ], [ '+352', 'Luxembourg +352' ],
+		[ '+353', 'Ireland +353' ], [ '+354', 'Iceland +354' ], [ '+355', 'Albania +355' ], [ '+356', 'Malta +356' ],
+		[ '+357', 'Cyprus +357' ], [ '+358', 'Finland +358' ], [ '+359', 'Bulgaria +359' ], [ '+370', 'Lithuania +370' ],
+		[ '+371', 'Latvia +371' ], [ '+372', 'Estonia +372' ], [ '+373', 'Moldova +373' ], [ '+374', 'Armenia +374' ],
+		[ '+375', 'Belarus +375' ], [ '+376', 'Andorra +376' ], [ '+377', 'Monaco +377' ], [ '+378', 'San Marino +378' ],
+		[ '+380', 'Ukraine +380' ], [ '+381', 'Serbia +381' ], [ '+382', 'Montenegro +382' ], [ '+383', 'Kosovo +383' ],
+		[ '+385', 'Croatia +385' ], [ '+386', 'Slovenia +386' ], [ '+387', 'Bosnia and Herzegovina +387' ], [ '+389', 'North Macedonia +389' ],
+		[ '+420', 'Czechia +420' ], [ '+421', 'Slovakia +421' ], [ '+423', 'Liechtenstein +423' ],
+		[ '+500', 'Falkland Islands +500' ], [ '+501', 'Belize +501' ], [ '+502', 'Guatemala +502' ], [ '+503', 'El Salvador +503' ],
+		[ '+504', 'Honduras +504' ], [ '+505', 'Nicaragua +505' ], [ '+506', 'Costa Rica +506' ], [ '+507', 'Panama +507' ],
+		[ '+509', 'Haiti +509' ], [ '+591', 'Bolivia +591' ], [ '+592', 'Guyana +592' ], [ '+593', 'Ecuador +593' ],
+		[ '+595', 'Paraguay +595' ], [ '+597', 'Suriname +597' ], [ '+598', 'Uruguay +598' ],
+		[ '+670', 'Timor-Leste +670' ], [ '+673', 'Brunei +673' ], [ '+674', 'Nauru +674' ], [ '+675', 'Papua New Guinea +675' ],
+		[ '+676', 'Tonga +676' ], [ '+677', 'Solomon Islands +677' ], [ '+678', 'Vanuatu +678' ], [ '+679', 'Fiji +679' ],
+		[ '+680', 'Palau +680' ], [ '+682', 'Cook Islands +682' ], [ '+685', 'Samoa +685' ], [ '+686', 'Kiribati +686' ],
+		[ '+689', 'French Polynesia +689' ], [ '+691', 'Micronesia +691' ], [ '+692', 'Marshall Islands +692' ],
+		[ '+850', 'North Korea +850' ], [ '+852', 'Hong Kong +852' ], [ '+853', 'Macau +853' ], [ '+855', 'Cambodia +855' ],
+		[ '+856', 'Laos +856' ], [ '+880', 'Bangladesh +880' ], [ '+886', 'Taiwan +886' ],
+		[ '+960', 'Maldives +960' ], [ '+961', 'Lebanon +961' ], [ '+962', 'Jordan +962' ], [ '+963', 'Syria +963' ],
+		[ '+964', 'Iraq +964' ], [ '+965', 'Kuwait +965' ], [ '+966', 'Saudi Arabia +966' ], [ '+967', 'Yemen +967' ],
+		[ '+968', 'Oman +968' ], [ '+970', 'Palestine +970' ], [ '+971', 'United Arab Emirates +971' ], [ '+972', 'Israel +972' ],
+		[ '+973', 'Bahrain +973' ], [ '+974', 'Qatar +974' ], [ '+975', 'Bhutan +975' ], [ '+976', 'Mongolia +976' ],
+		[ '+977', 'Nepal +977' ], [ '+992', 'Tajikistan +992' ], [ '+993', 'Turkmenistan +993' ], [ '+994', 'Azerbaijan +994' ],
+		[ '+995', 'Georgia +995' ], [ '+996', 'Kyrgyzstan +996' ], [ '+998', 'Uzbekistan +998' ],
 	];
 
 	function money( n ) {
@@ -77,7 +124,6 @@
 			selectedMeasureAddonSlugs: [],
 			measureAddonQuantities: {},
 			measureTierLicenseQuantities: {},
-			payAnnually: false,
 			domainWanted: null,
 			domainName: '',
 			selectedBespokeSlugs: [],
@@ -309,10 +355,16 @@
 		return this.config.catalog.bespoke.filter( function ( b ) { return slugs.indexOf( b.slug ) !== -1; } );
 	};
 
-	/** Real-USD running total across every priced section (points-based
-	 *  Website Package/Modules are excluded — those stay points-only). */
+	/** Real-USD running total across every priced section, including the
+	 *  Website Package and Website Modules — the package is the primary
+	 *  thing being sold here, so its price (and any add-on modules) belong
+	 *  in the headline total, not just tracked in points. `s.price || 0`
+	 *  guards classic mode, whose solutions never carry a price field. */
 	SSWWizard.prototype.usdTotal = function () {
 		var total = 0;
+		var tier = this.selectedTier();
+		if ( tier ) total += tier.price;
+		this.selectedSolutions().forEach( function ( s ) { total += ( s.price || 0 ) * this.moduleBillableQty( s ); }.bind( this ) );
 		var marketing = this.selectedMarketing();
 		if ( marketing ) total += marketing.price;
 		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
@@ -320,13 +372,6 @@
 		if ( measure ) total += this.measureTierPriceFor( measure );
 		this.selectedMeasureAddons().forEach( function ( a ) { total += this.measureAddonPriceFor( a ); }.bind( this ) );
 		return total;
-	};
-
-	// 20% off per the pricing PDF's Payment Terms, when the visitor opts to
-	// pay upfront for a full year at checkout.
-	SSWWizard.prototype.usdTotalAfterAnnualDiscount = function () {
-		var total = this.usdTotal();
-		return this.state.payAnnually ? Math.round( total * 0.8 * 100 ) / 100 : total;
 	};
 
 	SSWWizard.prototype.currentStepName = function () {
@@ -1172,8 +1217,15 @@
 			PHONE_CODES.forEach( function ( pair ) {
 				phoneCode.appendChild( el( 'option', { value: pair[ 0 ] }, [ pair[ 1 ] ] ) );
 			} );
-			var input = el( 'input', { type: 'tel', name: 'phone' } );
+			var input = el( 'input', { type: 'tel', name: 'phone', inputmode: 'tel', placeholder: '9171234567' } );
 			if ( required ) input.setAttribute( 'required', 'required' );
+			// Strip anything that isn't a digit/space/hyphen/parenthesis as the
+			// visitor types (or pastes) — the country code already lives in the
+			// select next to it, so letters have no legitimate use here.
+			input.addEventListener( 'input', function () {
+				var cleaned = input.value.replace( /[^\d\s\-()]/g, '' );
+				if ( cleaned !== input.value ) input.value = cleaned;
+			} );
 			row.appendChild( phoneCode );
 			row.appendChild( input );
 			fieldWrap.appendChild( row );
@@ -1212,20 +1264,6 @@
 
 		var hp = el( 'input', { class: 'ssw-hp', type: 'text', name: 'hp', tabindex: '-1', autocomplete: 'off' } );
 		form.appendChild( hp );
-
-		if ( this.isSinglePage() ) {
-			var annualWrap = el( 'label', { class: 'ssw-annual-toggle' } );
-			var annualCb = el( 'input', { type: 'checkbox' } );
-			annualCb.checked = !! this.state.payAnnually;
-			annualCb.addEventListener( 'change', function () {
-				this.state.payAnnually = annualCb.checked;
-				this.persist();
-				this.render();
-			}.bind( this ) );
-			annualWrap.appendChild( annualCb );
-			annualWrap.appendChild( el( 'span', {}, [ 'Pay upfront for 1 year (20% off)' ] ) );
-			form.appendChild( annualWrap );
-		}
 
 		var errorBox = el( 'div', { class: 'ssw-form-error' } );
 
@@ -1290,9 +1328,7 @@
 				bespoke_interested: !! this.state.bespokeInterested,
 				bespoke_notes: this.state.bespokeNotes || '',
 				enterprise_selected: !! this.state.enterpriseSelected,
-				pay_annually: !! this.state.payAnnually,
 				monthly_total: this.usdTotal(),
-				annual_total: this.state.payAnnually ? Math.round( this.usdTotalAfterAnnualDiscount() * 12 * 100 ) / 100 : 0,
 				phone_country_code: phoneCode ? phoneCode.value : '',
 			};
 
@@ -1451,17 +1487,9 @@
 			var usd = this.usdTotal();
 			if ( usd > 0 ) {
 				box.appendChild( el( 'div', { class: 'ssw-order-total' }, [
-					el( 'span', {}, [ 'Monthly total (excl. Website Package)' ] ),
+					el( 'span', {}, [ 'Monthly total' ] ),
 					el( 'span', {}, [ money( usd ) + '/mo' ] ),
 				] ) );
-				if ( this.state.payAnnually ) {
-					var discounted = this.usdTotalAfterAnnualDiscount();
-					box.appendChild( row( [ el( 'span', {}, [ '20% annual prepay discount' ] ) ], '−' + money( usd - discounted ) + '/mo' ) );
-					box.appendChild( el( 'div', { class: 'ssw-order-total' }, [
-						el( 'span', {}, [ 'Due today (12 months upfront)' ] ),
-						el( 'span', {}, [ money( discounted * 12 ) ] ),
-					] ) );
-				}
 			}
 		}
 

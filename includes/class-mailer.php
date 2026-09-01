@@ -86,9 +86,7 @@ class SSW_Mailer {
 				? __( 'Yes', 'strivre-solutions-wizard' ) . ( ! empty( $data['bespoke_notes'] ) ? ' — ' . $data['bespoke_notes'] : '' )
 				: __( 'No', 'strivre-solutions-wizard' ),
 			'{enterprise_selected}' => ! empty( $data['enterprise_selected'] ) ? __( 'Yes', 'strivre-solutions-wizard' ) : __( 'No', 'strivre-solutions-wizard' ),
-			'{pay_annually}'      => ! empty( $data['pay_annually'] )
-				? sprintf( __( 'Yes — $%s due upfront (20%% off $%s/mo)', 'strivre-solutions-wizard' ), $data['annual_total'] ?? 0, $data['monthly_total'] ?? 0 )
-				: __( 'No', 'strivre-solutions-wizard' ),
+			'{monthly_total}'     => isset( $data['monthly_total'] ) ? '$' . $data['monthly_total'] . '/mo' : '',
 		);
 	}
 

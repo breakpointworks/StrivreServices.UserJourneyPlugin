@@ -310,9 +310,7 @@ class SSW_CPT {
 				: '',
 			__( 'Bespoke Dev. Interest', 'strivre-solutions-wizard' ) => get_post_meta( $post->ID, '_bespoke_interested', true ) ? __( 'Yes', 'strivre-solutions-wizard' ) . ' — ' . get_post_meta( $post->ID, '_bespoke_notes', true ) : __( 'No', 'strivre-solutions-wizard' ),
 			__( 'Enterprise Bundle', 'strivre-solutions-wizard' )  => get_post_meta( $post->ID, '_enterprise_selected', true ) ? __( 'Yes', 'strivre-solutions-wizard' ) : __( 'No', 'strivre-solutions-wizard' ),
-			__( 'Pay Annually?', 'strivre-solutions-wizard' )      => get_post_meta( $post->ID, '_pay_annually', true )
-				? sprintf( 'Yes — $%s due upfront (20%% off $%s/mo)', get_post_meta( $post->ID, '_annual_total', true ), get_post_meta( $post->ID, '_monthly_total', true ) )
-				: __( 'No', 'strivre-solutions-wizard' ),
+			__( 'Monthly Total', 'strivre-solutions-wizard' )      => get_post_meta( $post->ID, '_monthly_total', true ) ? '$' . get_post_meta( $post->ID, '_monthly_total', true ) . '/mo' : '',
 			__( 'Source Page', 'strivre-solutions-wizard' )        => get_post_meta( $post->ID, '_source_page_url', true ),
 		);
 
@@ -537,9 +535,7 @@ class SSW_CPT {
 				'bespoke_interested' => get_post_meta( $id, '_bespoke_interested', true ) ? 'yes' : 'no',
 				'bespoke_notes'     => get_post_meta( $id, '_bespoke_notes', true ),
 				'enterprise_selected' => get_post_meta( $id, '_enterprise_selected', true ) ? 'yes' : 'no',
-				'pay_annually'      => get_post_meta( $id, '_pay_annually', true ) ? 'yes' : 'no',
 				'monthly_total'     => get_post_meta( $id, '_monthly_total', true ),
-				'annual_total'      => get_post_meta( $id, '_annual_total', true ),
 				'phone_country_code' => get_post_meta( $id, '_phone_country_code', true ),
 				'source_page_url'   => get_post_meta( $id, '_source_page_url', true ),
 			);
