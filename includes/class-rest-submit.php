@@ -118,9 +118,10 @@ class SSW_REST_Submit {
 				continue;
 			}
 			$licenses[] = array(
-				'title' => sanitize_text_field( $item['title'] ),
-				'price' => (float) ( $item['price'] ?? 0 ),
-				'qty'   => max( 1, absint( $item['qty'] ?? 1 ) ),
+				'title'    => sanitize_text_field( $item['title'] ),
+				'price'    => (float) ( $item['price'] ?? 0 ),
+				'qty'      => max( 1, absint( $item['qty'] ?? 1 ) ),
+				'monthQty' => max( 1, absint( $item['monthQty'] ?? 1 ) ),
 			);
 		}
 

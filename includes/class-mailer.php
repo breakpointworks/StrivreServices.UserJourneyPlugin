@@ -148,8 +148,17 @@ class SSW_Mailer {
 
 		$licenses_lines = array();
 		foreach ( $data['licenses'] ?? array() as $item ) {
-			$qty = (int) ( $item['qty'] ?? 1 );
-			$licenses_lines[] = sprintf( '- %s%s ($%s/mo)', $item['title'] ?? '', $qty > 1 ? " (×{$qty} licenses)" : '', $item['price'] ?? 0 );
+			$qty        = (int) ( $item['qty'] ?? 1 );
+			$month_qty  = (int) ( $item['monthQty'] ?? 1 );
+			$lic_parts = array();
+			if ( $qty > 1 ) {
+				$lic_parts[] = "{$qty} users";
+			}
+			if ( $month_qty > 1 ) {
+				$lic_parts[] = "{$month_qty} months";
+			}
+			$lic_suffix = $lic_parts ? ' (×' . implode( ' × ', $lic_parts ) . ')' : '';
+			$licenses_lines[] = sprintf( '- %s%s ($%s/mo)', $item['title'] ?? '', $lic_suffix, $item['price'] ?? 0 );
 		}
 
 		$measure_addon_lines = array();

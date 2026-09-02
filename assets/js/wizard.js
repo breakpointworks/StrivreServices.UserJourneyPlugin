@@ -121,6 +121,7 @@
 			moduleWebsiteQuantities: {},
 			selectedLicenseSlugs: [],
 			licenseQuantities: {},
+			licenseMonthQuantities: {},
 			measureTitle: '',
 			selectedMeasureAddonSlugs: [],
 			measureAddonQuantities: {},
@@ -287,6 +288,17 @@
 		return this.state.licenseQuantities[ lic.slug ] || 1;
 	};
 
+	// Licenses are always "Per user / month" (per the pricing PDF) — a
+	// second dropdown captures the term length, independent of headcount.
+	SSWWizard.prototype.licenseMonthQtyFor = function ( lic ) {
+		if ( ! this.isPerUnit( lic ) ) return 1;
+		return this.state.licenseMonthQuantities[ lic.slug ] || 1;
+	};
+
+	SSWWizard.prototype.licenseTotalMultiplier = function ( lic ) {
+		return this.licenseQtyFor( lic ) * this.licenseMonthQtyFor( lic );
+	};
+
 	var QTY_KIND_CONFIG = { user: [ 'users', 1, 20 ], license: [ 'licenses', 1, 20 ], month: [ 'months', 1, 12 ], report: [ 'reports', 1, 12 ] };
 	SSWWizard.prototype.qtyUnitLabel = function ( kind ) {
 		return ( QTY_KIND_CONFIG[ kind ] || [ 'units' ] )[ 0 ];
@@ -388,7 +400,7 @@
 		this.selectedSolutions().forEach( function ( s ) { total += ( s.price || 0 ) * this.moduleTotalMultiplier( s ); }.bind( this ) );
 		var marketing = this.selectedMarketing();
 		if ( marketing ) total += marketing.price;
-		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
+		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseTotalMultiplier( l ); }.bind( this ) );
 		var measure = this.selectedMeasureTier();
 		if ( measure ) total += this.measureTierPriceFor( measure );
 		this.selectedMeasureAddons().forEach( function ( a ) { total += this.measureAddonPriceFor( a ); }.bind( this ) );
@@ -883,20 +895,26 @@
 			var selected = this.state.selectedLicenseSlugs.indexOf( lic.slug ) !== -1;
 			var perUnit = this.isPerUnit( lic );
 			var qty = selected ? this.licenseQtyFor( lic ) : 1;
+			var monthQty = selected ? this.licenseMonthQtyFor( lic ) : 1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var licHeader = el( 'div', { class: 'ssw-solution-header', style: lic.icon ? '' : 'justify-content:flex-end;' } );
 			if ( lic.icon ) licHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: lic.icon, alt: '' } ) );
-			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty ) + '/mo/user' ] ) );
+			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty * monthQty ) + '/mo/user' ] ) );
 			card.appendChild( licHeader );
 			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
 			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
 			if ( selected && perUnit ) {
-				card.appendChild( this.renderQuantityField( 'licenseQuantities', lic.slug, qty, 'licenses' ) );
+				card.appendChild( this.renderQuantityField( 'licenseQuantities', lic.slug, qty, 'users' ) );
+				card.appendChild( this.renderQuantityField( 'licenseMonthQuantities', lic.slug, monthQty, 'months', 1, 12 ) );
 			}
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedLicenseSlugs.indexOf( lic.slug );
 				if ( idx === -1 ) this.state.selectedLicenseSlugs.push( lic.slug );
-				else { this.state.selectedLicenseSlugs.splice( idx, 1 ); delete this.state.licenseQuantities[ lic.slug ]; }
+				else {
+					this.state.selectedLicenseSlugs.splice( idx, 1 );
+					delete this.state.licenseQuantities[ lic.slug ];
+					delete this.state.licenseMonthQuantities[ lic.slug ];
+				}
 				this.persist();
 				this.render();
 			}.bind( this ) );
@@ -1349,7 +1367,7 @@
 				domain_wanted: !! this.state.domainWanted,
 				domain_name: this.state.domainName || '',
 				marketing_title: this.state.marketingTitle || '',
-				licenses: this.selectedLicenses().map( function ( l ) { var qty = this.licenseQtyFor( l ); return { title: l.title, price: l.price * qty, qty: qty }; }.bind( this ) ),
+				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price * this.licenseTotalMultiplier( l ), qty: this.licenseQtyFor( l ), monthQty: this.licenseMonthQtyFor( l ) }; }.bind( this ) ),
 				measure_title: this.state.measureTitle || '',
 				measure_license_qty: this.selectedMeasureTier() ? this.measureTierLicenseQtyFor( this.selectedMeasureTier() ) : 0,
 				measure_price: this.selectedMeasureTier() ? this.measureTierPriceFor( this.selectedMeasureTier() ) : 0,
@@ -1459,7 +1477,11 @@
 			}
 			this.selectedLicenses().forEach( function ( l ) {
 				var lqty = this.licenseQtyFor( l );
-				list.appendChild( row( [ el( 'span', {}, [ l.title + ( lqty > 1 ? ' (×' + lqty + ' licenses)' : '' ) ] ) ], money( l.price * lqty ) + '/mo' ) );
+				var lMonthQty = this.licenseMonthQtyFor( l );
+				var lparts = [];
+				if ( lqty > 1 ) lparts.push( lqty + ' users' );
+				if ( lMonthQty > 1 ) lparts.push( lMonthQty + ' months' );
+				list.appendChild( row( [ el( 'span', {}, [ l.title + ( lparts.length ? ' (×' + lparts.join( ' × ' ) + ')' : '' ) ] ) ], money( this.licenseTotalMultiplier( l ) * l.price ) + '/mo' ) );
 				rowCount++;
 			}.bind( this ) );
 			var measure = this.selectedMeasureTier();
