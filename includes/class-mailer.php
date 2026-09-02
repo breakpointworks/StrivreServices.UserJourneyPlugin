@@ -87,7 +87,12 @@ class SSW_Mailer {
 		$result = ( new SSW_Signup_Api_Client() )->send( self::api_payload( $data, $tags, array(
 			'to'      => $admin_emails,
 			'subject' => self::fill( SSW_Admin_Settings::get( 'admin_email_subject' ), $tags ),
-			'replyTo' => ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) ? $data['email'] : null,
+			// Strivre's API rejects any non-null replyTo with a "does not have
+			// the right to send mail on behalf of..." error (Exchange/M365
+			// permission gap on their service account) — always omit it here
+			// until that's fixed on their end. wp_mail-routed fallback emails
+			// still carry a real reply-to.
+			'replyTo' => null,
 		) ) );
 		self::record_api_result( $result );
 		if ( is_wp_error( $result ) ) {
@@ -101,11 +106,13 @@ class SSW_Mailer {
 		if ( empty( $data['email'] ) || ! is_email( $data['email'] ) ) {
 			return null;
 		}
-		$from_email = SSW_Admin_Settings::get( 'from_email' );
-		$result     = ( new SSW_Signup_Api_Client() )->send( self::api_payload( $data, $tags, array(
+		$result = ( new SSW_Signup_Api_Client() )->send( self::api_payload( $data, $tags, array(
 			'to'      => array( $data['email'] ),
 			'subject' => self::fill( SSW_Admin_Settings::get( 'customer_email_subject' ), $tags ),
-			'replyTo' => is_email( $from_email ) ? $from_email : null,
+			// See send_admin_api() — Strivre's API currently rejects any
+			// non-null replyTo, so this stays null until their backend
+			// permission gap is fixed.
+			'replyTo' => null,
 		) ) );
 		self::record_api_result( $result );
 		if ( is_wp_error( $result ) ) {

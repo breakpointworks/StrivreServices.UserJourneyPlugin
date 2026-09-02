@@ -143,7 +143,12 @@ class SSW_Signup_Api_Client {
 			return new WP_Error( 'ssw_signup_api_unauthorized', __( 'Sign-up email API rejected the token.', 'strivre-solutions-wizard' ) );
 		}
 		if ( $code < 200 || $code >= 300 ) {
-			return new WP_Error( 'ssw_signup_api_send_failed', sprintf( __( 'Sign-up email API send failed (HTTP %d).', 'strivre-solutions-wizard' ), $code ) );
+			$detail = '';
+			$body   = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_array( $body ) && ! empty( $body['error'] ) ) {
+				$detail = ' ' . $body['error'];
+			}
+			return new WP_Error( 'ssw_signup_api_send_failed', sprintf( __( 'Sign-up email API send failed (HTTP %1$d).%2$s', 'strivre-solutions-wizard' ), $code, $detail ) );
 		}
 
 		return true;
