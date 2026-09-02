@@ -33,6 +33,15 @@ class SSW_Signup_Api_Client {
 			return new WP_Error( 'ssw_signup_api_no_url', __( 'Sign-up email API base URL is not configured.', 'strivre-solutions-wizard' ) );
 		}
 
+		// A static token (settings "Option B") always wins over login-based
+		// auth when both happen to be filled in, since it's the simpler,
+		// more explicit choice — used as-is, no login call or caching, and
+		// no auto-refresh possible if it's ever revoked or expires.
+		$static_token = trim( (string) SSW_Admin_Settings::get( 'signup_api_static_token' ) );
+		if ( '' !== $static_token ) {
+			return $this->send_signup_email( $base_url, $static_token, $payload );
+		}
+
 		$token = get_transient( self::TOKEN_TRANSIENT );
 		if ( ! $token ) {
 			$token = $this->login( $base_url );

@@ -40,6 +40,7 @@ class SSW_Admin_Settings {
 			'signup_api_base_url'      => '',
 			'signup_api_login_email'   => '',
 			'signup_api_login_password' => '',
+			'signup_api_static_token'  => '',
 			'spam_guard_enabled'     => 1,
 			'admin_email_subject'    => 'New Solutions Wizard submission — {company}',
 			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nAddress:\n{address}\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
@@ -84,6 +85,7 @@ class SSW_Admin_Settings {
 		// password might legitimately contain (e.g. leading/trailing
 		// significant whitespace is unlikely, but quotes/backslashes aren't).
 		$clean['signup_api_login_password'] = (string) ( $input['signup_api_login_password'] ?? '' );
+		$clean['signup_api_static_token']   = (string) ( $input['signup_api_static_token'] ?? '' );
 		$clean['spam_guard_enabled']    = empty( $input['spam_guard_enabled'] ) ? 0 : 1;
 		$clean['admin_email_subject']   = sanitize_text_field( $input['admin_email_subject'] ?? '' );
 		$clean['admin_email_body']      = sanitize_textarea_field( $input['admin_email_body'] ?? '' );
@@ -182,12 +184,21 @@ class SSW_Admin_Settings {
 							<p class="description"><?php esc_html_e( 'The API call never blocks a submission or the WordPress email — if it fails, everything else still goes through as normal.', 'strivre-solutions-wizard' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Staff notification email(s)', 'strivre-solutions-wizard' ); ?></th>
+						<td><p class="description"><?php esc_html_e( 'Uses the same "Notify these emails" address(es) set under Notifications above, whichever channel(s) are active — there\'s nothing separate to configure here.', 'strivre-solutions-wizard' ); ?></p></td>
+					</tr>
 				</table>
 				<table class="form-table ssw-signup-api-fields" role="presentation">
 					<tr>
 						<th><label for="ssw_signup_api_base_url"><?php esc_html_e( 'API base URL', 'strivre-solutions-wizard' ); ?></label></th>
-						<td><input type="url" id="ssw_signup_api_base_url" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_base_url]" value="<?php echo esc_attr( $s['signup_api_base_url'] ); ?>" placeholder="https://api.example.com" /></td>
+						<td><input type="url" id="ssw_signup_api_base_url" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_base_url]" value="<?php echo esc_attr( $s['signup_api_base_url'] ); ?>" placeholder="https://api.example.com" />
+						<p class="description"><?php esc_html_e( 'This is Strivre\'s test/dev environment right now — swap it for the production URL once the client\'s own instance is ready, with no other changes needed.', 'strivre-solutions-wizard' ); ?></p></td>
 					</tr>
+				</table>
+
+				<h3><?php esc_html_e( 'Option A — Email/password login', 'strivre-solutions-wizard' ); ?></h3>
+				<table class="form-table ssw-signup-api-fields" role="presentation">
 					<tr>
 						<th><label for="ssw_signup_api_login_email"><?php esc_html_e( 'Login email', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="text" id="ssw_signup_api_login_email" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_login_email]" value="<?php echo esc_attr( $s['signup_api_login_email'] ); ?>" autocomplete="off" /></td>
@@ -195,7 +206,16 @@ class SSW_Admin_Settings {
 					<tr>
 						<th><label for="ssw_signup_api_login_password"><?php esc_html_e( 'Login password', 'strivre-solutions-wizard' ); ?></label></th>
 						<td><input type="password" id="ssw_signup_api_login_password" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_login_password]" value="<?php echo esc_attr( $s['signup_api_login_password'] ); ?>" autocomplete="off" />
-						<p class="description"><?php esc_html_e( 'The wizard logs in with this email/password to get a token, then caches it for 45 minutes before logging in again.', 'strivre-solutions-wizard' ); ?></p></td>
+						<p class="description"><?php esc_html_e( 'The wizard logs in with this email/password to get a token, then caches it until shortly before it expires (per the login response\'s own "expires" field) before logging in again.', 'strivre-solutions-wizard' ); ?></p></td>
+					</tr>
+				</table>
+
+				<h3><?php esc_html_e( 'Option B — Static API token', 'strivre-solutions-wizard' ); ?></h3>
+				<table class="form-table ssw-signup-api-fields" role="presentation">
+					<tr>
+						<th><label for="ssw_signup_api_static_token"><?php esc_html_e( 'API token', 'strivre-solutions-wizard' ); ?></label></th>
+						<td><input type="password" id="ssw_signup_api_static_token" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_static_token]" value="<?php echo esc_attr( $s['signup_api_static_token'] ); ?>" autocomplete="off" />
+						<p class="description"><?php esc_html_e( 'If the client\'s production setup instead hands you a fixed API key/token rather than a login, paste it here — when this is filled in, it\'s used directly as the bearer token and the login fields above are skipped entirely.', 'strivre-solutions-wizard' ); ?></p></td>
 					</tr>
 				</table>
 				<script>
