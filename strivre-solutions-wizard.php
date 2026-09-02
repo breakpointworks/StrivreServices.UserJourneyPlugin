@@ -27,6 +27,7 @@ require_once SSW_PLUGIN_DIR . 'includes/class-admin-settings.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-catalog-settings.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-domain-lookup-client.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-domain-provider-hostinger.php';
+require_once SSW_PLUGIN_DIR . 'includes/class-signup-api-client.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-mailer.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-rest-domain-search.php';
 require_once SSW_PLUGIN_DIR . 'includes/class-rest-submit.php';

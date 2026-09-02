@@ -36,6 +36,10 @@ class SSW_Admin_Settings {
 			'domainr_api_key'        => '',
 			'domainr_api_host'       => 'domains-api.p.rapidapi.com',
 			'hostinger_api_token'    => '',
+			'email_delivery_mode'      => 'wordpress',
+			'signup_api_base_url'      => '',
+			'signup_api_login_email'   => '',
+			'signup_api_login_password' => '',
 			'spam_guard_enabled'     => 1,
 			'admin_email_subject'    => 'New Solutions Wizard submission — {company}',
 			'admin_email_body'       => "A new submission came in from {name} ({email}, {phone}) at {company}.\n\nAddress:\n{address}\n\nPackage tier: {tier} ({points_included} points included)\nWebsite template: {template}\nDomain: {domain}\n\nSolutions selected:\n{solutions}\n\nPoints used: {points_used} / {points_included}\nPoints shortfall: {points_shortfall}\n\nSubmitted from: {page_url}",
@@ -73,6 +77,13 @@ class SSW_Admin_Settings {
 		$clean['domainr_api_key']       = sanitize_text_field( $input['domainr_api_key'] ?? '' );
 		$clean['domainr_api_host']      = sanitize_text_field( $input['domainr_api_host'] ?? '' );
 		$clean['hostinger_api_token']   = sanitize_text_field( $input['hostinger_api_token'] ?? '' );
+		$clean['email_delivery_mode']   = in_array( $input['email_delivery_mode'] ?? '', array( 'api', 'both' ), true ) ? $input['email_delivery_mode'] : 'wordpress';
+		$clean['signup_api_base_url']   = esc_url_raw( trim( $input['signup_api_base_url'] ?? '' ) );
+		$clean['signup_api_login_email'] = sanitize_text_field( $input['signup_api_login_email'] ?? '' );
+		// Not sanitize_text_field() — that would strip characters a real
+		// password might legitimately contain (e.g. leading/trailing
+		// significant whitespace is unlikely, but quotes/backslashes aren't).
+		$clean['signup_api_login_password'] = (string) ( $input['signup_api_login_password'] ?? '' );
 		$clean['spam_guard_enabled']    = empty( $input['spam_guard_enabled'] ) ? 0 : 1;
 		$clean['admin_email_subject']   = sanitize_text_field( $input['admin_email_subject'] ?? '' );
 		$clean['admin_email_body']      = sanitize_textarea_field( $input['admin_email_body'] ?? '' );
@@ -152,6 +163,48 @@ class SSW_Admin_Settings {
 						groups.forEach( function ( g ) {
 							g.style.display = g.getAttribute( 'data-provider' ) === select.value ? '' : 'none';
 						} );
+					}
+					select.addEventListener( 'change', sync );
+					sync();
+				} )();
+				</script>
+
+				<h2 class="title"><?php esc_html_e( 'Sign-up email API', 'strivre-solutions-wizard' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th><label for="ssw_email_delivery_mode"><?php esc_html_e( 'Send notifications via', 'strivre-solutions-wizard' ); ?></label></th>
+						<td>
+							<select id="ssw_email_delivery_mode" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[email_delivery_mode]">
+								<option value="wordpress" <?php selected( $s['email_delivery_mode'], 'wordpress' ); ?>><?php esc_html_e( 'WordPress email only (current behavior)', 'strivre-solutions-wizard' ); ?></option>
+								<option value="api" <?php selected( $s['email_delivery_mode'], 'api' ); ?>><?php esc_html_e( "Strivre's Sign-Up Email API only", 'strivre-solutions-wizard' ); ?></option>
+								<option value="both" <?php selected( $s['email_delivery_mode'], 'both' ); ?>><?php esc_html_e( 'Both', 'strivre-solutions-wizard' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'The API call never blocks a submission or the WordPress email — if it fails, everything else still goes through as normal.', 'strivre-solutions-wizard' ); ?></p>
+						</td>
+					</tr>
+				</table>
+				<table class="form-table ssw-signup-api-fields" role="presentation">
+					<tr>
+						<th><label for="ssw_signup_api_base_url"><?php esc_html_e( 'API base URL', 'strivre-solutions-wizard' ); ?></label></th>
+						<td><input type="url" id="ssw_signup_api_base_url" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_base_url]" value="<?php echo esc_attr( $s['signup_api_base_url'] ); ?>" placeholder="https://api.example.com" /></td>
+					</tr>
+					<tr>
+						<th><label for="ssw_signup_api_login_email"><?php esc_html_e( 'Login email', 'strivre-solutions-wizard' ); ?></label></th>
+						<td><input type="text" id="ssw_signup_api_login_email" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_login_email]" value="<?php echo esc_attr( $s['signup_api_login_email'] ); ?>" autocomplete="off" /></td>
+					</tr>
+					<tr>
+						<th><label for="ssw_signup_api_login_password"><?php esc_html_e( 'Login password', 'strivre-solutions-wizard' ); ?></label></th>
+						<td><input type="password" id="ssw_signup_api_login_password" class="regular-text" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[signup_api_login_password]" value="<?php echo esc_attr( $s['signup_api_login_password'] ); ?>" autocomplete="off" />
+						<p class="description"><?php esc_html_e( 'The wizard logs in with this email/password to get a token, then caches it for 45 minutes before logging in again.', 'strivre-solutions-wizard' ); ?></p></td>
+					</tr>
+				</table>
+				<script>
+				( function () {
+					var select = document.getElementById( 'ssw_email_delivery_mode' );
+					var groups = document.querySelectorAll( '.ssw-signup-api-fields' );
+					function sync() {
+						var show = select.value === 'api' || select.value === 'both';
+						groups.forEach( function ( g ) { g.style.display = show ? '' : 'none'; } );
 					}
 					select.addEventListener( 'change', sync );
 					sync();
