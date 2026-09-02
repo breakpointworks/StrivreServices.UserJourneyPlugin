@@ -36,7 +36,7 @@ class SSW_Admin_Settings {
 			'domainr_api_key'        => '',
 			'domainr_api_host'       => 'domains-api.p.rapidapi.com',
 			'hostinger_api_token'    => '',
-			'email_delivery_mode'      => 'wordpress',
+			'email_delivery_mode'      => 'api',
 			'signup_api_base_url'      => '',
 			'signup_api_login_email'   => '',
 			'signup_api_login_password' => '',
@@ -177,11 +177,11 @@ class SSW_Admin_Settings {
 						<th><label for="ssw_email_delivery_mode"><?php esc_html_e( 'Send notifications via', 'strivre-solutions-wizard' ); ?></label></th>
 						<td>
 							<select id="ssw_email_delivery_mode" name="<?php echo esc_attr( self::OPTION_KEY ); ?>[email_delivery_mode]">
-								<option value="wordpress" <?php selected( $s['email_delivery_mode'], 'wordpress' ); ?>><?php esc_html_e( 'WordPress email only (current behavior)', 'strivre-solutions-wizard' ); ?></option>
-								<option value="api" <?php selected( $s['email_delivery_mode'], 'api' ); ?>><?php esc_html_e( "Strivre's Sign-Up Email API only", 'strivre-solutions-wizard' ); ?></option>
-								<option value="both" <?php selected( $s['email_delivery_mode'], 'both' ); ?>><?php esc_html_e( 'Both', 'strivre-solutions-wizard' ); ?></option>
+								<option value="api" <?php selected( $s['email_delivery_mode'], 'api' ); ?>><?php esc_html_e( "Strivre's Sign-Up Email API (default) — falls back to WordPress email automatically if it fails", 'strivre-solutions-wizard' ); ?></option>
+								<option value="both" <?php selected( $s['email_delivery_mode'], 'both' ); ?>><?php esc_html_e( 'Both, always', 'strivre-solutions-wizard' ); ?></option>
+								<option value="wordpress" <?php selected( $s['email_delivery_mode'], 'wordpress' ); ?>><?php esc_html_e( 'WordPress email only', 'strivre-solutions-wizard' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'The API call never blocks a submission or the WordPress email — if it fails, everything else still goes through as normal.', 'strivre-solutions-wizard' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A submission is never left unnotified: on the default "API" mode, any recipient the API fails to reach is sent via WordPress email instead for that one submission. If the API fails 5 times in a row, this setting automatically switches back to "WordPress email only" until someone fixes the connection and switches it back manually.', 'strivre-solutions-wizard' ); ?></p>
 						</td>
 					</tr>
 					<tr>

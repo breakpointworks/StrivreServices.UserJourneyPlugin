@@ -6,51 +6,121 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sends the two notification emails (admin + customer), substituting merge
  * tags into the templates configured in Strivre Requests → Settings.
- * `email_delivery_mode` (same screen) picks the channel: WordPress's
- * wp_mail(), Strivre's own Sign-Up Email API (SSW_Signup_Api_Client), or
- * both. The API path is purely additive — it never replaces or blocks the
- * wp_mail() path when both are enabled, and any API failure is logged and
- * swallowed rather than surfaced to the visitor.
+ * `email_delivery_mode` (same screen) picks the channel:
+ *
+ * - "wordpress": wp_mail() only (the original behavior).
+ * - "both": wp_mail() always runs, and the Sign-Up Email API
+ *   (SSW_Signup_Api_Client) is also attempted for each recipient —
+ *   purely additive, its outcome never affects the wp_mail() send.
+ * - "api" (the default): the API is tried first for each recipient;
+ *   if a given send fails, wp_mail() is used as a fallback for that
+ *   one recipient only, so a visitor is never left unnotified.
+ *
+ * Every API attempt (success or failure) feeds a consecutive-failure
+ * counter (see record_api_result()) — after 5 in a row, the API is
+ * clearly unreachable/misconfigured, so `email_delivery_mode` is
+ * automatically reverted to "wordpress" (and the counter reset) until
+ * someone fixes the connection and switches it back on manually in
+ * Strivre Requests → Settings.
  */
 class SSW_Mailer {
+
+	const API_FAILURE_OPTION    = 'ssw_signup_api_consecutive_failures';
+	const API_FAILURE_THRESHOLD = 5;
 
 	public static function send_notifications( array $data ) {
 		$tags = self::build_tags( $data );
 		$mode = SSW_Admin_Settings::get( 'email_delivery_mode' ) ?: 'wordpress';
 
-		if ( 'api' !== $mode ) {
-			self::send(
-				self::split_emails( SSW_Admin_Settings::get( 'notification_emails' ) ),
-				self::fill( SSW_Admin_Settings::get( 'admin_email_subject' ), $tags ),
-				self::fill( SSW_Admin_Settings::get( 'admin_email_body' ), $tags ),
-				$data['email'] ?? ''
-			);
-
-			if ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) {
-				self::send(
-					array( $data['email'] ),
-					self::fill( SSW_Admin_Settings::get( 'customer_email_subject' ), $tags ),
-					self::fill( SSW_Admin_Settings::get( 'customer_email_body' ), $tags ),
-					''
-				);
-			}
+		if ( 'wordpress' === $mode ) {
+			self::send_admin_wp( $data, $tags );
+			self::send_customer_wp( $data, $tags );
+			return;
 		}
 
-		if ( 'wordpress' !== $mode ) {
-			self::send_via_api( $data, $tags );
+		$admin_result    = self::send_admin_api( $data, $tags );
+		$customer_result = self::send_customer_api( $data, $tags );
+
+		if ( 'both' === $mode ) {
+			self::send_admin_wp( $data, $tags );
+			self::send_customer_wp( $data, $tags );
+		} else {
+			// "api" mode: wp_mail() is only the fallback for whichever leg
+			// the API failed on (a skipped/not-applicable leg is `null`,
+			// not a failure, and needs no fallback).
+			if ( is_wp_error( $admin_result ) ) {
+				self::send_admin_wp( $data, $tags );
+			}
+			if ( is_wp_error( $customer_result ) ) {
+				self::send_customer_wp( $data, $tags );
+			}
 		}
 	}
 
-	/**
-	 * Mirrors the admin+customer dual-send above, through
-	 * SSW_Signup_Api_Client instead of wp_mail(). The API has no dedicated
-	 * fields for Marketing/Licenses/Measure Analytics/Bespoke/Enterprise —
-	 * those go into `summary` as a compact digest (built from the same tag
-	 * values already computed above) since `htmlBody` is always sent blank.
-	 */
-	private static function send_via_api( array $data, array $tags ) {
-		$client = new SSW_Signup_Api_Client();
+	private static function send_admin_wp( array $data, array $tags ) {
+		self::send(
+			self::split_emails( SSW_Admin_Settings::get( 'notification_emails' ) ),
+			self::fill( SSW_Admin_Settings::get( 'admin_email_subject' ), $tags ),
+			self::fill( SSW_Admin_Settings::get( 'admin_email_body' ), $tags ),
+			$data['email'] ?? ''
+		);
+	}
 
+	private static function send_customer_wp( array $data, array $tags ) {
+		if ( empty( $data['email'] ) || ! is_email( $data['email'] ) ) {
+			return;
+		}
+		self::send(
+			array( $data['email'] ),
+			self::fill( SSW_Admin_Settings::get( 'customer_email_subject' ), $tags ),
+			self::fill( SSW_Admin_Settings::get( 'customer_email_body' ), $tags ),
+			''
+		);
+	}
+
+	/** @return true|WP_Error|null null = nothing to send (no configured admin emails) */
+	private static function send_admin_api( array $data, array $tags ) {
+		$admin_emails = self::split_emails( SSW_Admin_Settings::get( 'notification_emails' ) );
+		if ( ! $admin_emails ) {
+			return null;
+		}
+		$result = ( new SSW_Signup_Api_Client() )->send( self::api_payload( $data, $tags, array(
+			'to'      => $admin_emails,
+			'subject' => self::fill( SSW_Admin_Settings::get( 'admin_email_subject' ), $tags ),
+			'replyTo' => ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) ? $data['email'] : null,
+		) ) );
+		self::record_api_result( $result );
+		if ( is_wp_error( $result ) ) {
+			error_log( '[SSW Signup API] admin notification failed: ' . $result->get_error_message() );
+		}
+		return $result;
+	}
+
+	/** @return true|WP_Error|null null = nothing to send (no/invalid customer email) */
+	private static function send_customer_api( array $data, array $tags ) {
+		if ( empty( $data['email'] ) || ! is_email( $data['email'] ) ) {
+			return null;
+		}
+		$from_email = SSW_Admin_Settings::get( 'from_email' );
+		$result     = ( new SSW_Signup_Api_Client() )->send( self::api_payload( $data, $tags, array(
+			'to'      => array( $data['email'] ),
+			'subject' => self::fill( SSW_Admin_Settings::get( 'customer_email_subject' ), $tags ),
+			'replyTo' => is_email( $from_email ) ? $from_email : null,
+		) ) );
+		self::record_api_result( $result );
+		if ( is_wp_error( $result ) ) {
+			error_log( '[SSW Signup API] customer notification failed: ' . $result->get_error_message() );
+		}
+		return $result;
+	}
+
+	/**
+	 * The API has no dedicated fields for Marketing/Licenses/Measure
+	 * Analytics/Bespoke/Enterprise — those go into `summary` as a compact
+	 * digest (built from the same tag values computed for wp_mail) since
+	 * `htmlBody` is always sent blank.
+	 */
+	private static function api_payload( array $data, array $tags, array $overrides ) {
 		$solutions = array_map(
 			function ( $item ) {
 				return array( 'name' => $item['title'] ?? '', 'points' => (int) ( $item['points'] ?? 0 ) );
@@ -58,38 +128,46 @@ class SSW_Mailer {
 			$data['solutions'] ?? array()
 		);
 
-		$base_payload = array(
-			'htmlBody'      => '',
-			'summary'       => self::build_summary( $data, $tags ),
-			'customerName'  => $data['name'] ?? '',
-			'customerEmail' => $data['email'] ?? '',
-			'packageTier'   => $data['tier'] ?? '',
-			'domain'        => $data['domain'] ?: ( $data['domain_name'] ?? '' ),
-			'solutions'     => $solutions,
-			'attachments'   => null,
+		return array_merge(
+			array(
+				'htmlBody'      => '',
+				'summary'       => self::build_summary( $data, $tags ),
+				'customerName'  => $data['name'] ?? '',
+				'customerEmail' => $data['email'] ?? '',
+				'packageTier'   => $data['tier'] ?? '',
+				'domain'        => $data['domain'] ?: ( $data['domain_name'] ?? '' ),
+				'solutions'     => $solutions,
+				'attachments'   => null,
+			),
+			$overrides
 		);
+	}
 
-		$admin_emails = self::split_emails( SSW_Admin_Settings::get( 'notification_emails' ) );
-		if ( $admin_emails ) {
-			$result = $client->send( array_merge( $base_payload, array(
-				'to'      => $admin_emails,
-				'subject' => self::fill( SSW_Admin_Settings::get( 'admin_email_subject' ), $tags ),
-				'replyTo' => ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) ? $data['email'] : null,
-			) ) );
-			if ( is_wp_error( $result ) ) {
-				error_log( '[SSW Signup API] admin notification failed: ' . $result->get_error_message() );
+	/**
+	 * Tracks consecutive API failures across sends (any success resets it
+	 * to zero); at API_FAILURE_THRESHOLD in a row, automatically switches
+	 * `email_delivery_mode` back to "wordpress" so a persistently broken
+	 * or misconfigured API doesn't keep slowing down/losing every
+	 * submission's notifications.
+	 */
+	private static function record_api_result( $result ) {
+		if ( ! is_wp_error( $result ) ) {
+			if ( get_option( self::API_FAILURE_OPTION, 0 ) ) {
+				update_option( self::API_FAILURE_OPTION, 0, false );
 			}
+			return;
 		}
 
-		if ( ! empty( $data['email'] ) && is_email( $data['email'] ) ) {
-			$from_email = SSW_Admin_Settings::get( 'from_email' );
-			$result     = $client->send( array_merge( $base_payload, array(
-				'to'      => array( $data['email'] ),
-				'subject' => self::fill( SSW_Admin_Settings::get( 'customer_email_subject' ), $tags ),
-				'replyTo' => is_email( $from_email ) ? $from_email : null,
-			) ) );
-			if ( is_wp_error( $result ) ) {
-				error_log( '[SSW Signup API] customer notification failed: ' . $result->get_error_message() );
+		$count = (int) get_option( self::API_FAILURE_OPTION, 0 ) + 1;
+		update_option( self::API_FAILURE_OPTION, $count, false );
+
+		if ( $count >= self::API_FAILURE_THRESHOLD ) {
+			update_option( self::API_FAILURE_OPTION, 0, false );
+			$settings = get_option( SSW_Admin_Settings::OPTION_KEY, array() );
+			if ( 'wordpress' !== ( $settings['email_delivery_mode'] ?? '' ) ) {
+				$settings['email_delivery_mode'] = 'wordpress';
+				update_option( SSW_Admin_Settings::OPTION_KEY, $settings );
+				error_log( '[SSW Signup API] ' . self::API_FAILURE_THRESHOLD . ' consecutive failures — automatically reverted "Send notifications via" to WordPress email. Fix the API connection, then switch it back manually in Strivre Requests → Settings.' );
 			}
 		}
 	}
