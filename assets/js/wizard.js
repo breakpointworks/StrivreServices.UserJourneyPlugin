@@ -25,60 +25,102 @@
 	// Common calling codes for the checkout phone field — not exhaustive,
 	// covers the markets Strivre is realistically getting leads from.
 	// A near-complete ITU calling-code list (not just the handful of markets
-	// Strivre was seeing leads from) — sorted by calling code so nearby
-	// dial codes group together, with the country/territory name spelled
-	// out (not just an ISO2 guess) so visitors can actually find theirs.
+	// Strivre was seeing leads from), sorted alphabetically by country name
+	// (not by dial code) so visitors can actually find theirs by scanning.
 	var PHONE_CODES = [
-		[ '+1', 'US/Canada +1' ],
-		[ '+7', 'Russia/Kazakhstan +7' ],
-		[ '+20', 'Egypt +20' ], [ '+27', 'South Africa +27' ],
-		[ '+30', 'Greece +30' ], [ '+31', 'Netherlands +31' ], [ '+32', 'Belgium +32' ], [ '+33', 'France +33' ],
-		[ '+34', 'Spain +34' ], [ '+36', 'Hungary +36' ], [ '+39', 'Italy +39' ], [ '+40', 'Romania +40' ],
-		[ '+41', 'Switzerland +41' ], [ '+43', 'Austria +43' ], [ '+44', 'United Kingdom +44' ], [ '+45', 'Denmark +45' ],
-		[ '+46', 'Sweden +46' ], [ '+47', 'Norway +47' ], [ '+48', 'Poland +48' ], [ '+49', 'Germany +49' ],
-		[ '+51', 'Peru +51' ], [ '+52', 'Mexico +52' ], [ '+53', 'Cuba +53' ], [ '+54', 'Argentina +54' ],
-		[ '+55', 'Brazil +55' ], [ '+56', 'Chile +56' ], [ '+57', 'Colombia +57' ], [ '+58', 'Venezuela +58' ],
-		[ '+60', 'Malaysia +60' ], [ '+61', 'Australia +61' ], [ '+62', 'Indonesia +62' ], [ '+63', 'Philippines +63' ],
-		[ '+64', 'New Zealand +64' ], [ '+65', 'Singapore +65' ], [ '+66', 'Thailand +66' ],
-		[ '+81', 'Japan +81' ], [ '+82', 'South Korea +82' ], [ '+84', 'Vietnam +84' ], [ '+86', 'China +86' ],
-		[ '+90', 'Turkey +90' ], [ '+91', 'India +91' ], [ '+92', 'Pakistan +92' ], [ '+93', 'Afghanistan +93' ],
-		[ '+94', 'Sri Lanka +94' ], [ '+95', 'Myanmar +95' ], [ '+98', 'Iran +98' ],
-		[ '+211', 'South Sudan +211' ], [ '+212', 'Morocco +212' ], [ '+213', 'Algeria +213' ], [ '+216', 'Tunisia +216' ],
-		[ '+218', 'Libya +218' ], [ '+220', 'Gambia +220' ], [ '+221', 'Senegal +221' ], [ '+222', 'Mauritania +222' ],
-		[ '+223', 'Mali +223' ], [ '+224', 'Guinea +224' ], [ '+225', "Cote d'Ivoire +225" ], [ '+226', 'Burkina Faso +226' ],
-		[ '+227', 'Niger +227' ], [ '+228', 'Togo +228' ], [ '+229', 'Benin +229' ], [ '+230', 'Mauritius +230' ],
-		[ '+231', 'Liberia +231' ], [ '+232', 'Sierra Leone +232' ], [ '+233', 'Ghana +233' ], [ '+234', 'Nigeria +234' ],
-		[ '+235', 'Chad +235' ], [ '+236', 'Central African Republic +236' ], [ '+237', 'Cameroon +237' ], [ '+238', 'Cabo Verde +238' ],
-		[ '+239', 'Sao Tome and Principe +239' ], [ '+240', 'Equatorial Guinea +240' ], [ '+241', 'Gabon +241' ], [ '+242', 'Congo (Brazzaville) +242' ],
-		[ '+243', 'DR Congo +243' ], [ '+244', 'Angola +244' ], [ '+245', 'Guinea-Bissau +245' ], [ '+248', 'Seychelles +248' ],
-		[ '+249', 'Sudan +249' ], [ '+250', 'Rwanda +250' ], [ '+251', 'Ethiopia +251' ], [ '+252', 'Somalia +252' ],
-		[ '+253', 'Djibouti +253' ], [ '+254', 'Kenya +254' ], [ '+255', 'Tanzania +255' ], [ '+256', 'Uganda +256' ],
-		[ '+257', 'Burundi +257' ], [ '+258', 'Mozambique +258' ], [ '+260', 'Zambia +260' ], [ '+261', 'Madagascar +261' ],
-		[ '+263', 'Zimbabwe +263' ], [ '+264', 'Namibia +264' ], [ '+265', 'Malawi +265' ], [ '+266', 'Lesotho +266' ],
-		[ '+267', 'Botswana +267' ], [ '+268', 'Eswatini +268' ], [ '+351', 'Portugal +351' ], [ '+352', 'Luxembourg +352' ],
-		[ '+353', 'Ireland +353' ], [ '+354', 'Iceland +354' ], [ '+355', 'Albania +355' ], [ '+356', 'Malta +356' ],
-		[ '+357', 'Cyprus +357' ], [ '+358', 'Finland +358' ], [ '+359', 'Bulgaria +359' ], [ '+370', 'Lithuania +370' ],
-		[ '+371', 'Latvia +371' ], [ '+372', 'Estonia +372' ], [ '+373', 'Moldova +373' ], [ '+374', 'Armenia +374' ],
-		[ '+375', 'Belarus +375' ], [ '+376', 'Andorra +376' ], [ '+377', 'Monaco +377' ], [ '+378', 'San Marino +378' ],
-		[ '+380', 'Ukraine +380' ], [ '+381', 'Serbia +381' ], [ '+382', 'Montenegro +382' ], [ '+383', 'Kosovo +383' ],
-		[ '+385', 'Croatia +385' ], [ '+386', 'Slovenia +386' ], [ '+387', 'Bosnia and Herzegovina +387' ], [ '+389', 'North Macedonia +389' ],
-		[ '+420', 'Czechia +420' ], [ '+421', 'Slovakia +421' ], [ '+423', 'Liechtenstein +423' ],
-		[ '+500', 'Falkland Islands +500' ], [ '+501', 'Belize +501' ], [ '+502', 'Guatemala +502' ], [ '+503', 'El Salvador +503' ],
-		[ '+504', 'Honduras +504' ], [ '+505', 'Nicaragua +505' ], [ '+506', 'Costa Rica +506' ], [ '+507', 'Panama +507' ],
-		[ '+509', 'Haiti +509' ], [ '+591', 'Bolivia +591' ], [ '+592', 'Guyana +592' ], [ '+593', 'Ecuador +593' ],
-		[ '+595', 'Paraguay +595' ], [ '+597', 'Suriname +597' ], [ '+598', 'Uruguay +598' ],
-		[ '+670', 'Timor-Leste +670' ], [ '+673', 'Brunei +673' ], [ '+674', 'Nauru +674' ], [ '+675', 'Papua New Guinea +675' ],
-		[ '+676', 'Tonga +676' ], [ '+677', 'Solomon Islands +677' ], [ '+678', 'Vanuatu +678' ], [ '+679', 'Fiji +679' ],
-		[ '+680', 'Palau +680' ], [ '+682', 'Cook Islands +682' ], [ '+685', 'Samoa +685' ], [ '+686', 'Kiribati +686' ],
-		[ '+689', 'French Polynesia +689' ], [ '+691', 'Micronesia +691' ], [ '+692', 'Marshall Islands +692' ],
-		[ '+850', 'North Korea +850' ], [ '+852', 'Hong Kong +852' ], [ '+853', 'Macau +853' ], [ '+855', 'Cambodia +855' ],
-		[ '+856', 'Laos +856' ], [ '+880', 'Bangladesh +880' ], [ '+886', 'Taiwan +886' ],
-		[ '+960', 'Maldives +960' ], [ '+961', 'Lebanon +961' ], [ '+962', 'Jordan +962' ], [ '+963', 'Syria +963' ],
-		[ '+964', 'Iraq +964' ], [ '+965', 'Kuwait +965' ], [ '+966', 'Saudi Arabia +966' ], [ '+967', 'Yemen +967' ],
-		[ '+968', 'Oman +968' ], [ '+970', 'Palestine +970' ], [ '+971', 'United Arab Emirates +971' ], [ '+972', 'Israel +972' ],
-		[ '+973', 'Bahrain +973' ], [ '+974', 'Qatar +974' ], [ '+975', 'Bhutan +975' ], [ '+976', 'Mongolia +976' ],
-		[ '+977', 'Nepal +977' ], [ '+992', 'Tajikistan +992' ], [ '+993', 'Turkmenistan +993' ], [ '+994', 'Azerbaijan +994' ],
-		[ '+995', 'Georgia +995' ], [ '+996', 'Kyrgyzstan +996' ], [ '+998', 'Uzbekistan +998' ],
+		[ '+93', "Afghanistan +93" ], [ '+355', "Albania +355" ],
+		[ '+213', "Algeria +213" ], [ '+376', "Andorra +376" ],
+		[ '+244', "Angola +244" ], [ '+54', "Argentina +54" ],
+		[ '+374', "Armenia +374" ], [ '+61', "Australia +61" ],
+		[ '+43', "Austria +43" ], [ '+994', "Azerbaijan +994" ],
+		[ '+973', "Bahrain +973" ], [ '+880', "Bangladesh +880" ],
+		[ '+375', "Belarus +375" ], [ '+32', "Belgium +32" ],
+		[ '+501', "Belize +501" ], [ '+229', "Benin +229" ],
+		[ '+975', "Bhutan +975" ], [ '+591', "Bolivia +591" ],
+		[ '+387', "Bosnia and Herzegovina +387" ], [ '+267', "Botswana +267" ],
+		[ '+55', "Brazil +55" ], [ '+673', "Brunei +673" ],
+		[ '+359', "Bulgaria +359" ], [ '+226', "Burkina Faso +226" ],
+		[ '+257', "Burundi +257" ], [ '+238', "Cabo Verde +238" ],
+		[ '+855', "Cambodia +855" ], [ '+237', "Cameroon +237" ],
+		[ '+236', "Central African Republic +236" ], [ '+235', "Chad +235" ],
+		[ '+56', "Chile +56" ], [ '+86', "China +86" ],
+		[ '+57', "Colombia +57" ], [ '+242', "Congo (Brazzaville) +242" ],
+		[ '+682', "Cook Islands +682" ], [ '+506', "Costa Rica +506" ],
+		[ '+225', "Cote d'Ivoire +225" ], [ '+385', "Croatia +385" ],
+		[ '+53', "Cuba +53" ], [ '+357', "Cyprus +357" ],
+		[ '+420', "Czechia +420" ], [ '+45', "Denmark +45" ],
+		[ '+253', "Djibouti +253" ], [ '+243', "DR Congo +243" ],
+		[ '+593', "Ecuador +593" ], [ '+20', "Egypt +20" ],
+		[ '+503', "El Salvador +503" ], [ '+240', "Equatorial Guinea +240" ],
+		[ '+372', "Estonia +372" ], [ '+268', "Eswatini +268" ],
+		[ '+251', "Ethiopia +251" ], [ '+500', "Falkland Islands +500" ],
+		[ '+679', "Fiji +679" ], [ '+358', "Finland +358" ],
+		[ '+33', "France +33" ], [ '+689', "French Polynesia +689" ],
+		[ '+241', "Gabon +241" ], [ '+220', "Gambia +220" ],
+		[ '+995', "Georgia +995" ], [ '+49', "Germany +49" ],
+		[ '+233', "Ghana +233" ], [ '+30', "Greece +30" ],
+		[ '+502', "Guatemala +502" ], [ '+224', "Guinea +224" ],
+		[ '+245', "Guinea-Bissau +245" ], [ '+592', "Guyana +592" ],
+		[ '+509', "Haiti +509" ], [ '+504', "Honduras +504" ],
+		[ '+852', "Hong Kong +852" ], [ '+36', "Hungary +36" ],
+		[ '+354', "Iceland +354" ], [ '+91', "India +91" ],
+		[ '+62', "Indonesia +62" ], [ '+98', "Iran +98" ],
+		[ '+964', "Iraq +964" ], [ '+353', "Ireland +353" ],
+		[ '+972', "Israel +972" ], [ '+39', "Italy +39" ],
+		[ '+81', "Japan +81" ], [ '+962', "Jordan +962" ],
+		[ '+254', "Kenya +254" ], [ '+686', "Kiribati +686" ],
+		[ '+383', "Kosovo +383" ], [ '+965', "Kuwait +965" ],
+		[ '+996', "Kyrgyzstan +996" ], [ '+856', "Laos +856" ],
+		[ '+371', "Latvia +371" ], [ '+961', "Lebanon +961" ],
+		[ '+266', "Lesotho +266" ], [ '+231', "Liberia +231" ],
+		[ '+218', "Libya +218" ], [ '+423', "Liechtenstein +423" ],
+		[ '+370', "Lithuania +370" ], [ '+352', "Luxembourg +352" ],
+		[ '+853', "Macau +853" ], [ '+261', "Madagascar +261" ],
+		[ '+265', "Malawi +265" ], [ '+60', "Malaysia +60" ],
+		[ '+960', "Maldives +960" ], [ '+223', "Mali +223" ],
+		[ '+356', "Malta +356" ], [ '+692', "Marshall Islands +692" ],
+		[ '+222', "Mauritania +222" ], [ '+230', "Mauritius +230" ],
+		[ '+52', "Mexico +52" ], [ '+691', "Micronesia +691" ],
+		[ '+373', "Moldova +373" ], [ '+377', "Monaco +377" ],
+		[ '+976', "Mongolia +976" ], [ '+382', "Montenegro +382" ],
+		[ '+212', "Morocco +212" ], [ '+258', "Mozambique +258" ],
+		[ '+95', "Myanmar +95" ], [ '+264', "Namibia +264" ],
+		[ '+674', "Nauru +674" ], [ '+977', "Nepal +977" ],
+		[ '+31', "Netherlands +31" ], [ '+64', "New Zealand +64" ],
+		[ '+505', "Nicaragua +505" ], [ '+227', "Niger +227" ],
+		[ '+234', "Nigeria +234" ], [ '+850', "North Korea +850" ],
+		[ '+389', "North Macedonia +389" ], [ '+47', "Norway +47" ],
+		[ '+968', "Oman +968" ], [ '+92', "Pakistan +92" ],
+		[ '+680', "Palau +680" ], [ '+970', "Palestine +970" ],
+		[ '+507', "Panama +507" ], [ '+675', "Papua New Guinea +675" ],
+		[ '+595', "Paraguay +595" ], [ '+51', "Peru +51" ],
+		[ '+63', "Philippines +63" ], [ '+48', "Poland +48" ],
+		[ '+351', "Portugal +351" ], [ '+974', "Qatar +974" ],
+		[ '+40', "Romania +40" ], [ '+7', "Russia/Kazakhstan +7" ],
+		[ '+250', "Rwanda +250" ], [ '+685', "Samoa +685" ],
+		[ '+378', "San Marino +378" ], [ '+239', "Sao Tome and Principe +239" ],
+		[ '+966', "Saudi Arabia +966" ], [ '+221', "Senegal +221" ],
+		[ '+381', "Serbia +381" ], [ '+248', "Seychelles +248" ],
+		[ '+232', "Sierra Leone +232" ], [ '+65', "Singapore +65" ],
+		[ '+421', "Slovakia +421" ], [ '+386', "Slovenia +386" ],
+		[ '+677', "Solomon Islands +677" ], [ '+252', "Somalia +252" ],
+		[ '+27', "South Africa +27" ], [ '+82', "South Korea +82" ],
+		[ '+211', "South Sudan +211" ], [ '+34', "Spain +34" ],
+		[ '+94', "Sri Lanka +94" ], [ '+249', "Sudan +249" ],
+		[ '+597', "Suriname +597" ], [ '+46', "Sweden +46" ],
+		[ '+41', "Switzerland +41" ], [ '+963', "Syria +963" ],
+		[ '+886', "Taiwan +886" ], [ '+992', "Tajikistan +992" ],
+		[ '+255', "Tanzania +255" ], [ '+66', "Thailand +66" ],
+		[ '+670', "Timor-Leste +670" ], [ '+228', "Togo +228" ],
+		[ '+676', "Tonga +676" ], [ '+216', "Tunisia +216" ],
+		[ '+90', "Turkey +90" ], [ '+993', "Turkmenistan +993" ],
+		[ '+256', "Uganda +256" ], [ '+380', "Ukraine +380" ],
+		[ '+971', "United Arab Emirates +971" ], [ '+44', "United Kingdom +44" ],
+		[ '+598', "Uruguay +598" ], [ '+1', "US/Canada +1" ],
+		[ '+998', "Uzbekistan +998" ], [ '+678', "Vanuatu +678" ],
+		[ '+58', "Venezuela +58" ], [ '+84', "Vietnam +84" ],
+		[ '+967', "Yemen +967" ], [ '+260', "Zambia +260" ],
+		[ '+263', "Zimbabwe +263" ],
 	];
 
 	function money( n ) {
@@ -121,7 +163,6 @@
 			moduleWebsiteQuantities: {},
 			selectedLicenseSlugs: [],
 			licenseQuantities: {},
-			licenseMonthQuantities: {},
 			measureTitle: '',
 			selectedMeasureAddonSlugs: [],
 			measureAddonQuantities: {},
@@ -251,7 +292,10 @@
 	};
 
 	SSWWizard.prototype.moduleQtyFor = function ( mod ) {
-		if ( ! this.isPerUnit( mod ) ) return 1;
+		// "Per website/month" modules dropped their months dropdown per
+		// client request — billed per website only now, so this always
+		// stays 1 for that kind (guards against stale persisted state too).
+		if ( ! this.isPerUnit( mod ) || 'month' === this.unitKindFor( mod ) ) return 1;
 		return this.state.moduleQuantities[ mod.slug ] || 1;
 	};
 
@@ -263,13 +307,13 @@
 		return 'report' === this.unitKindFor( mod ) ? Math.max( 0, qty - 1 ) : qty;
 	};
 
-	// "Per website/month" and "Per user/month" modules are billed per
-	// website too — a second dropdown, independent of the months/users
-	// one, capped at 20. Report-kind modules don't get this second
-	// dimension (a diagnostic report isn't naturally "×N websites").
+	// Every item gets exactly one quantity dropdown, matching its own
+	// "per X" unit note — "per website/month" modules dropped their months
+	// dropdown (see moduleQtyFor above) in favor of this single "how many
+	// websites?" one; "per user" modules stay a single "how many users?"
+	// dropdown (see the primary one below) with no second dimension.
 	SSWWizard.prototype.moduleHasWebsiteQty = function ( mod ) {
-		var kind = this.unitKindFor( mod );
-		return 'month' === kind || 'user' === kind;
+		return 'month' === this.unitKindFor( mod );
 	};
 
 	SSWWizard.prototype.moduleWebsiteQtyFor = function ( mod ) {
@@ -286,17 +330,6 @@
 	SSWWizard.prototype.licenseQtyFor = function ( lic ) {
 		if ( ! this.isPerUnit( lic ) ) return 1;
 		return this.state.licenseQuantities[ lic.slug ] || 1;
-	};
-
-	// Licenses are always "Per user / month" (per the pricing PDF) — a
-	// second dropdown captures the term length, independent of headcount.
-	SSWWizard.prototype.licenseMonthQtyFor = function ( lic ) {
-		if ( ! this.isPerUnit( lic ) ) return 1;
-		return this.state.licenseMonthQuantities[ lic.slug ] || 1;
-	};
-
-	SSWWizard.prototype.licenseTotalMultiplier = function ( lic ) {
-		return this.licenseQtyFor( lic ) * this.licenseMonthQtyFor( lic );
 	};
 
 	var QTY_KIND_CONFIG = { user: [ 'users', 1, 20 ], license: [ 'licenses', 1, 20 ], month: [ 'months', 1, 12 ], report: [ 'reports', 1, 12 ] };
@@ -400,7 +433,7 @@
 		this.selectedSolutions().forEach( function ( s ) { total += ( s.price || 0 ) * this.moduleTotalMultiplier( s ); }.bind( this ) );
 		var marketing = this.selectedMarketing();
 		if ( marketing ) total += marketing.price;
-		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseTotalMultiplier( l ); }.bind( this ) );
+		this.selectedLicenses().forEach( function ( l ) { total += l.price * this.licenseQtyFor( l ); }.bind( this ) );
 		var measure = this.selectedMeasureTier();
 		if ( measure ) total += this.measureTierPriceFor( measure );
 		this.selectedMeasureAddons().forEach( function ( a ) { total += this.measureAddonPriceFor( a ); }.bind( this ) );
@@ -806,8 +839,12 @@
 				if ( this.moduleHasWebsiteQty( mod ) ) {
 					card.appendChild( this.renderQuantityField( 'moduleWebsiteQuantities', mod.slug, websiteQty, 'websites', 1, 20 ) );
 				}
-				var cfg = QTY_KIND_CONFIG[ kind ];
-				card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, cfg[ 0 ], cfg[ 1 ], cfg[ 2 ] ) );
+				// "Per website/month" modules are billed per website only
+				// now (no separate months dropdown) per client request.
+				if ( 'month' !== kind ) {
+					var cfg = QTY_KIND_CONFIG[ kind ];
+					card.appendChild( this.renderQuantityField( 'moduleQuantities', mod.slug, qty, cfg[ 0 ], cfg[ 1 ], cfg[ 2 ] ) );
+				}
 				if ( 'report' === kind ) {
 					card.appendChild( el( 'p', { class: 'ssw-qty-note' }, [
 						'First report is free — this is ' + billableQty + ' paid report' + ( 1 === billableQty ? '' : 's' ) + '.',
@@ -895,17 +932,15 @@
 			var selected = this.state.selectedLicenseSlugs.indexOf( lic.slug ) !== -1;
 			var perUnit = this.isPerUnit( lic );
 			var qty = selected ? this.licenseQtyFor( lic ) : 1;
-			var monthQty = selected ? this.licenseMonthQtyFor( lic ) : 1;
 			var card = el( 'div', { class: 'ssw-card ssw-solution-card' + ( selected ? ' selected' : '' ) } );
 			var licHeader = el( 'div', { class: 'ssw-solution-header', style: lic.icon ? '' : 'justify-content:flex-end;' } );
 			if ( lic.icon ) licHeader.appendChild( el( 'img', { class: 'ssw-card-icon', src: lic.icon, alt: '' } ) );
-			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty * monthQty ) + '/mo/user' ] ) );
+			licHeader.appendChild( el( 'div', { class: 'ssw-price-badge' }, [ money( lic.price * qty ) + '/mo/user' ] ) );
 			card.appendChild( licHeader );
 			card.appendChild( el( 'h4', {}, [ lic.title ] ) );
 			if ( lic.unitNote ) card.appendChild( el( 'p', {}, [ lic.unitNote ] ) );
 			if ( selected && perUnit ) {
 				card.appendChild( this.renderQuantityField( 'licenseQuantities', lic.slug, qty, 'users' ) );
-				card.appendChild( this.renderQuantityField( 'licenseMonthQuantities', lic.slug, monthQty, 'months', 1, 12 ) );
 			}
 			card.addEventListener( 'click', function () {
 				var idx = this.state.selectedLicenseSlugs.indexOf( lic.slug );
@@ -913,7 +948,6 @@
 				else {
 					this.state.selectedLicenseSlugs.splice( idx, 1 );
 					delete this.state.licenseQuantities[ lic.slug ];
-					delete this.state.licenseMonthQuantities[ lic.slug ];
 				}
 				this.persist();
 				this.render();
@@ -1367,7 +1401,7 @@
 				domain_wanted: !! this.state.domainWanted,
 				domain_name: this.state.domainName || '',
 				marketing_title: this.state.marketingTitle || '',
-				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price * this.licenseTotalMultiplier( l ), qty: this.licenseQtyFor( l ), monthQty: this.licenseMonthQtyFor( l ) }; }.bind( this ) ),
+				licenses: this.selectedLicenses().map( function ( l ) { return { title: l.title, price: l.price * this.licenseQtyFor( l ), qty: this.licenseQtyFor( l ) }; }.bind( this ) ),
 				measure_title: this.state.measureTitle || '',
 				measure_license_qty: this.selectedMeasureTier() ? this.measureTierLicenseQtyFor( this.selectedMeasureTier() ) : 0,
 				measure_price: this.selectedMeasureTier() ? this.measureTierPriceFor( this.selectedMeasureTier() ) : 0,
@@ -1477,11 +1511,9 @@
 			}
 			this.selectedLicenses().forEach( function ( l ) {
 				var lqty = this.licenseQtyFor( l );
-				var lMonthQty = this.licenseMonthQtyFor( l );
 				var lparts = [];
 				if ( lqty > 1 ) lparts.push( lqty + ' users' );
-				if ( lMonthQty > 1 ) lparts.push( lMonthQty + ' months' );
-				list.appendChild( row( [ el( 'span', {}, [ l.title + ( lparts.length ? ' (×' + lparts.join( ' × ' ) + ')' : '' ) ] ) ], money( this.licenseTotalMultiplier( l ) * l.price ) + '/mo' ) );
+				list.appendChild( row( [ el( 'span', {}, [ l.title + ( lparts.length ? ' (×' + lparts.join( ' × ' ) + ')' : '' ) ] ) ], money( lqty * l.price ) + '/mo' ) );
 				rowCount++;
 			}.bind( this ) );
 			var measure = this.selectedMeasureTier();

@@ -234,15 +234,7 @@ class SSW_Mailer {
 		$licenses_lines = array();
 		foreach ( $data['licenses'] ?? array() as $item ) {
 			$qty        = (int) ( $item['qty'] ?? 1 );
-			$month_qty  = (int) ( $item['monthQty'] ?? 1 );
-			$lic_parts = array();
-			if ( $qty > 1 ) {
-				$lic_parts[] = "{$qty} users";
-			}
-			if ( $month_qty > 1 ) {
-				$lic_parts[] = "{$month_qty} months";
-			}
-			$lic_suffix = $lic_parts ? ' (×' . implode( ' × ', $lic_parts ) . ')' : '';
+			$lic_suffix = $qty > 1 ? " (×{$qty} users)" : '';
 			$licenses_lines[] = sprintf( '- %s%s ($%s/mo)', $item['title'] ?? '', $lic_suffix, $item['price'] ?? 0 );
 		}
 
@@ -316,7 +308,7 @@ class SSW_Mailer {
 		$from_name  = SSW_Admin_Settings::get( 'from_name' );
 		$from_email = SSW_Admin_Settings::get( 'from_email' );
 
-		$headers = array();
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		if ( is_email( $from_email ) ) {
 			$headers[] = sprintf( 'From: %s <%s>', $from_name, $from_email );
 		}
@@ -327,7 +319,7 @@ class SSW_Mailer {
 		$message = apply_filters( 'ssw_mailer_message', array(
 			'to'      => $to,
 			'subject' => $subject,
-			'body'    => $body,
+			'body'    => self::wrap_html_email( $body, $from_email ),
 			'headers' => $headers,
 		) );
 
@@ -337,5 +329,40 @@ class SSW_Mailer {
 		}
 
 		wp_mail( $message['to'], $message['subject'], $message['body'], $message['headers'] );
+	}
+
+	/**
+	 * Wraps the plain-text, merge-tag-filled body (as edited in the Settings
+	 * screen's Body textareas — left as plain text so that field stays simple
+	 * to edit) in the same navy-header / white-card / footer chrome as
+	 * Strivre's own Sign-Up Email API templates, using the wizard's existing
+	 * brand colors (assets/css/wizard.css --ssw-primary / --ssw-secondary),
+	 * so a WordPress-fallback email looks like it came from the same place
+	 * as an API-sent one instead of a bare plain-text message.
+	 */
+	private static function wrap_html_email( $body, $from_email ) {
+		$content = nl2br( esc_html( $body ) );
+		$support_email = is_email( $from_email ) ? $from_email : SSW_Admin_Settings::get( 'notification_emails' );
+		$support_link  = is_email( $support_email )
+			? sprintf( '<a href="mailto:%1$s" style="color:#FFFFFF;text-decoration:none;">Contact support</a>', esc_attr( $support_email ) )
+			: '';
+		return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
+			. '<body style="margin:0;padding:0;background:#F4F6F8;font-family:Arial,Helvetica,sans-serif;color:#1E2933;">'
+			. '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;padding:24px 0;">'
+			. '<tr><td align="center">'
+			. '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">'
+			. '<tr><td style="background:#002144;padding:20px 28px;border-radius:8px 8px 0 0;">'
+			. '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+			. '<td style="color:#FFFFFF;font-size:18px;font-weight:bold;">Strivre Services</td>'
+			. '<td align="right" style="font-size:13px;">' . $support_link . '</td>'
+			. '</tr></table></td></tr>'
+			. '<tr><td style="background:#FFFFFF;padding:28px;border-radius:0 0 8px 8px;font-size:14px;line-height:1.6;">'
+			. $content
+			. '</td></tr>'
+			. '<tr><td style="padding:16px 28px;text-align:center;color:#64748B;font-size:12px;">'
+			. '&copy; ' . esc_html( gmdate( 'Y' ) ) . ' Strivre Services. All rights reserved.'
+			. '</td></tr>'
+			. '</table></td></tr></table>'
+			. '</body></html>';
 	}
 }
