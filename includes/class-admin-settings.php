@@ -107,8 +107,8 @@ class SSW_Admin_Settings {
 			<h2 class="nav-tab-wrapper ssw-tabs">
 				<a href="#" class="nav-tab" data-tab="delivery"><?php esc_html_e( 'Notifications & Delivery', 'strivre-solutions-wizard' ); ?></a>
 				<a href="#" class="nav-tab" data-tab="templates"><?php esc_html_e( 'Email Templates', 'strivre-solutions-wizard' ); ?></a>
-				<a href="#" class="nav-tab" data-tab="domain"><?php esc_html_e( 'Domain Search', 'strivre-solutions-wizard' ); ?></a>
-				<a href="#" class="nav-tab" data-tab="spam"><?php esc_html_e( 'Spam Guard', 'strivre-solutions-wizard' ); ?></a>
+				<a href="#" class="nav-tab" data-tab="domain"><?php esc_html_e( 'Domains API', 'strivre-solutions-wizard' ); ?></a>
+				<a href="#" class="nav-tab" data-tab="spam"><?php esc_html_e( 'Security', 'strivre-solutions-wizard' ); ?></a>
 			</h2>
 
 			<form method="post" action="options.php">
@@ -228,7 +228,7 @@ class SSW_Admin_Settings {
 				</div>
 
 				<div class="ssw-tab-panel" data-tab="domain" hidden>
-					<h2 class="title"><?php esc_html_e( 'Domain search', 'strivre-solutions-wizard' ); ?></h2>
+					<h2 class="title"><?php esc_html_e( 'Domains API', 'strivre-solutions-wizard' ); ?></h2>
 					<table class="form-table" role="presentation">
 						<tr>
 							<th><label for="ssw_domain_provider"><?php esc_html_e( 'Provider', 'strivre-solutions-wizard' ); ?></label></th>
@@ -279,7 +279,7 @@ class SSW_Admin_Settings {
 				</div>
 
 				<div class="ssw-tab-panel" data-tab="spam" hidden>
-					<h2 class="title"><?php esc_html_e( 'Spam guard', 'strivre-solutions-wizard' ); ?></h2>
+					<h2 class="title"><?php esc_html_e( 'Security', 'strivre-solutions-wizard' ); ?></h2>
 					<table class="form-table" role="presentation">
 						<tr>
 							<th><?php esc_html_e( 'Honeypot (Spam Guard) + minimum time-on-form', 'strivre-solutions-wizard' ); ?></th>
