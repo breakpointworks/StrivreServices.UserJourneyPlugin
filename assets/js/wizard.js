@@ -448,6 +448,13 @@
 		this.state.step = Math.max( 0, Math.min( this.steps.length - 1, index ) );
 		this.persist();
 		this.render();
+		// Each step re-renders the whole panel in place rather than
+		// navigating to a new page, so the browser has no reason to move
+		// the scroll position on its own — without this, going from a tall
+		// step to a shorter one (very common on mobile) leaves the viewport
+		// stranded past the new content, down around the site footer,
+		// instead of at the top of the step the visitor just landed on.
+		this.root.scrollIntoView( { behavior: 'smooth', block: 'start' } );
 	};
 
 	SSWWizard.prototype.canAdvance = function () {
